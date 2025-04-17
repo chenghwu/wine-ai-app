@@ -10,6 +10,8 @@ venv/
 
 # Secrets and env
 .env
+.env.*
+!.env.example
 
 # Test cache
 .pytest_cache/
@@ -29,7 +31,8 @@ frontend/node_modules/
 frontend/.next/
 frontend/.turbo/
 frontend/.env.local
-frontend/.env
+frontend/.env.production
+!frontend/.env.example
 
 # Images, screenshots
 *.png
