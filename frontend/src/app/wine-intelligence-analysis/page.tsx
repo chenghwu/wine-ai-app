@@ -18,7 +18,9 @@ export default function WineChatPage() {
     setResponse(null)
 
     try {
-      const res = await fetch('http://localhost:8000/api/chat-search-wine', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL
+      const res = await fetch(`${baseUrl}/chat-search-wine`,
+      {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
