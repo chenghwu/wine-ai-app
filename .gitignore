@@ -1,4 +1,44 @@
-venv/
+# Python
 __pycache__/
 *.py[cod]
+
+# Virtual environment
+venv/
+
+# Dependency logs
+*.log
+
+# Secrets and env
+.env
+
+# Test cache
+.pytest_cache/
+*.coverage
+coverage.xml
+htmlcov/
+
+# File-based cache
+cache/
+
+# VS Code & IDE config
+.vscode/
+.idea/
+
+# Node.js (frontend)
+frontend/node_modules/
+frontend/.next/
+frontend/.turbo/
+frontend/.env.local
+frontend/.env
+
+# Images, screenshots
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# Docker generated
+*.tar
+
+# macOS system files
 .DS_Store

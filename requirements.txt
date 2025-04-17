@@ -2,3 +2,10 @@ fastapi
 uvicorn
 pydantic
 python-multipart
+python-dotenv
+pytest
+pytest-asyncio
+google-generativeai
+bs4
+playwright>=1.44.0
+playwright-stealth

@@ -1,21 +1,49 @@
 from fastapi import APIRouter
-from app.models.mcp_model import MCPRequest
-from app.services.analyzer import analyze_sat_profile   # Import the SAT scoring engine
+from app.models.mcp_model import MCPRequest, MCPOutput
+from app.analyzers.sat_analyzer import analyze_wine_profile  # Import the SAT scoring engine
+from app.services.llm.llm_agent import summarize_with_gemini
+from app.services.llm.search_and_summarize import summarize_wine_info
+from app.utils.search import google_search_links
 
 router = APIRouter()
 
-@router.post("/analyze", summary="Analyze wine and return SAT profile")
-async def analyze_wine(request: MCPRequest):    # MCPRequest is a Pydantic model ensures wrapping the request in MCP format
-    # Extract input section from MCP
-    wine_input = request.input
+# Directly pass structured query to LLM for SAT-style output
+@router.post("/search-wine", summary="Search wine info using LLM and return SAT-style analysis")
+async def search_wine(request: MCPRequest):  
+    return {
+        "status": "searched",
+        "input": request.input,
+        "output": generate_wine_analysis_from_llm(request.input),
+        "context": request.context.dict()
+    }
 
-    # Run the WSET SAT scoring engine
-    sat_result = analyze_sat_profile(wine_input)
+# Extract user query, use Gimini to search and aggregate info
+@router.post("/chat-search-wine", summary="Search wine info using LLM and return SAT-style analysis")
+async def chat_search_wine(request: MCPRequest):
+    # Grab user's free-text query
+    query = request.input.get("query", "").strip()
 
-    # Construct new MCP-compatible response
+    ''' TODO:
+    # Use Gemini to extract wine info
+    parsed = parse_wine_query_with_llm(query)
+    '''
+
+    # Step 1: Summarize the wine info using your smart search pipeline
+    sat_result = summarize_wine_info(query)
+
+    # Step 2: Rule-based analysis if needed
+    sat_result["analysis"] = analyze_wine_profile(sat_result)
+
+    # Step 3: Ensure structure is complete
+    sat_result.setdefault("reference_source", [])
+    sat_result.setdefault("average_price", "N/A")
+
+    # Step 4: Wrap response using MCPOutput
+    output = MCPOutput(**sat_result)
+
     return {
         "status": "analyzed",
-        "input": wine_input,
-        "output": sat_result,
-        "context": request.context.dict()  # Keep original context metadata
+        "input": request.input,
+        "output": output,
+        "context": request.context.dict()  # Ensure dict for JSON serialization
     }

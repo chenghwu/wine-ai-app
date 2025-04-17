@@ -1,5 +1,5 @@
-from pydantic import BaseModel                       # Base class for creating data models in FastAPI
-from typing import Optional, Dict, Any               # Typing support for flexible input/output fields
+from pydantic import BaseModel, Field                # Base class for creating data models in FastAPI
+from typing import Optional, Dict, List, Union, Any  # Typing support for flexible input/output fields
 from datetime import datetime                        # For recording timestamp metadata
 
 # Define the context metadata for the analysis
@@ -10,8 +10,19 @@ class MCPContext(BaseModel):
     user_id: Optional[str] = None                    # Optionally record who made the request (for personalization or logging)
     ruleset: Optional[str] = None                    # Name of the logic applied (e.g., "WSET Level 3 SAT Rules")
 
+class MCPOutput(BaseModel):
+    wine: str
+    appearance: str
+    nose: str
+    palate: str
+    quality: str
+    aging: str
+    average_price: str = "N/A"
+    analysis: Union[str, Dict[str, Any]]    # allow both type
+    reference_source: List[str] = []  # default to empty list
+
 # Define the main request schema used in your FastAPI endpoint /analyze
 class MCPRequest(BaseModel):
-    input: Dict[str, Any]
-    output: Dict[str, Any]
+    input: Dict[str, Any] = Field(..., example={"query": "Opus One 2015"})
+    output: Optional[MCPOutput] = None
     context: MCPContext
