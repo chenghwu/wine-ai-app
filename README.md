@@ -1,10 +1,10 @@
-# Wine Intelligence Analysis App
+# 🍷 Wine Intelligence Analysis App
 
 A full-stack AI-powered wine analysis platform that combines expert-level sensory evaluation with real-time data aggregation. This app lets users input wine names or descriptions, intelligently extracts relevant information using Google Search and LLMs (Gemini), aggregates expert reviews and tasting notes from top wine websites, and analyzes the data using the WSET Systematic Approach to Tasting (SAT) criteria. Designed for wine enthusiasts, collectors, and professionals, it delivers a comprehensive SAT-style analysis, quality assessment, aging potential, and market price estimate—all in one place.
 
 ---
 
-## Features
+## 🚀 Features
 
 -  Text-based query understanding using Gemini
 -  Smart wine query extraction using LLM (Gemini)
@@ -19,7 +19,7 @@ A full-stack AI-powered wine analysis platform that combines expert-level sensor
 
 ---
 
-## Project Structure
+## ⚙️  Project Structure
 
 ```
 wine_ai_app/
@@ -46,7 +46,7 @@ wine_ai_app/
 
 ---
 
-## Local Development
+## 💻 Local Development
 
 ### Backend (FastAPI + Gemini)
 
@@ -89,7 +89,7 @@ Then visit [http://localhost:3000/wine-intelligence-analysis](http://localhost:3
 
 ---
 
-## Run Tests
+## 🧪 Run Tests
 
 ```bash
 make test
@@ -100,7 +100,7 @@ make test
 
 ---
 
-## Docker Support (optional)
+## 🐳 Docker Support (optional)
 
 ```bash
 # Build and run locally in Docker
@@ -113,7 +113,7 @@ make docker-compose-up
 
 ---
 
-## Caching System
+## ⚡️ Caching System
 
 - Cached by SHA1 of query or content
 - Used for: Google Search, HTML scraping, Gemini LLM
@@ -121,7 +121,7 @@ make docker-compose-up
 
 ---
 
-## Next Steps
+## 💡 Next Steps
 
 - Add PostgreSQL + Redis for persistence and caching
 - Search and crawling improvement
@@ -130,7 +130,7 @@ make docker-compose-up
 
 ---
 
-## References
+## 📘 References
 
 - [WSET Level 3 SAT](https://www.wsetglobal.com)
 - Google Gemini API via `google.generativeai`
