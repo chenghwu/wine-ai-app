@@ -11,10 +11,8 @@ def setup_gemini_env():
     if env == "prod" and (not api_key or not api_key.startswith("AIza")):
         raise ValueError("Missing or invalid GEMINI_API_KEY — check .env")
 
-    model = None
-    if env == "prod":
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-2.0-flash")
 
     return env, api_key, model
 

@@ -3,51 +3,14 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 from app.utils.cache import get_cache_or_fetch
 from app.utils.env import setup_gemini_env
+from app.prompts.wine_prompts import get_sat_prompt
 
-def summarize_with_gemini(wine_name: str, content: str) -> dict:
+def summarize_with_gemini(wine_name: str, content: str, sources: list[str]) -> dict:
     def fetch_gemini():
         env, _, model = setup_gemini_env()
 
-        if env == "dev":
-            print("Dev mode: returning mocked Gemini result")
-            return {
-                "wine": wine_name,
-                "appearance": "Deep ruby",
-                "nose": "Medium+ aromas of cassis, tobacco, mocha",
-                "palate": "Full-bodied, high acidity, ripe tannins, long finish",
-                "quality": "Very Good",
-                "aging": "Can age 8–12 years"
-            }
-
-        prompt = f"""
-Act as a certified wine expert trained in WSET Level 4 Systematic Approach to Tasting.
-Based on the following information about the wine \"{wine_name}\", please provide a detailed SAT-style analysis.
-
-Content:
-{content}
-
-Your response must include:
-- Appearance (clarity, intensity, color)
-- Nose (aromas, intensity)
-- Palate (sweetness, acidity, tannin, alcohol, body, flavour intensity, flavour characteristics, finish)
-- Quality level (Poor, Acceptable, Good, Very Good, Outstanding)
-- Aging potential and why
-- Average price
-- Why and how do you get this conclusion
-
-Output format must be structured like this JSON:
-{{
-"wine": "{wine_name}",
-"appearance": "...",
-"nose": "...",
-"palate": "...",
-"quality": "...",
-"aging": "...",
-"average price": "...",
-"analysis": "...",
-"reference source": "..."
-}}
-"""
+        # Change prompt for different possible results for metrics
+        prompt = get_sat_prompt(wine_name, content, sources)
 
         try:
             response = model.generate_content(prompt)
@@ -66,11 +29,6 @@ Output format must be structured like this JSON:
             print(f"Gemini API error: {e}")
             return {
                 "wine": wine_name,
-                "quality": "N/A",
-                "notes": "Gemini API error",
-                "appearance": "N/A",
-                "palate": "N/A",
-                "aging": "N/A",
                 "error": str(e)
             }
 
