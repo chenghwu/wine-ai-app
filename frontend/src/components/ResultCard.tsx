@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { WineAnalysisResponse } from '@/types/WineAnalysisResponse'
+import { SATResult } from '@/types/WineAnalysisResponse'
 
 interface ResultCardProps {
   response: WineAnalysisResponse
@@ -39,14 +40,14 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 }
 
 // Render SAT score section
-function SATSection({ sat }: NonNullable<WineAnalysisResponse['sat']>) {
+function SATSection({ sat }: { sat: SATResult }) {
   return (
     <li className="mt-4 space-y-2">
       <p><strong>Score:</strong> {sat.score}</p>
       <p><strong>Quality:</strong> {sat.quality}</p>
       <p><strong>Criteria Met:</strong> {sat.criteria.join(', ')}</p>
-      <p><strong>Clusters:</strong> {sat.matched_clusters.join(', ')}</p>
-      <p><strong>Descriptors:</strong> {sat.matched_descriptors.join(', ')}</p>
+      <p><strong>Clusters:</strong> {sat.clusters.join(', ')}</p>
+      <p><strong>Descriptors:</strong> {sat.descriptors.join(', ')}</p>
     </li>
   )
 }

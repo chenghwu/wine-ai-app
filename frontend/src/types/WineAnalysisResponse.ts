@@ -1,9 +1,9 @@
-export type SATResultDetails = {
+export interface SATResult {
     score: number
     quality: string
     criteria: string[]
-    matched_clusters: string[]
-    matched_descriptors: string[]
+    clusters: string[]
+    descriptors: string[]
   }
 
 export type WineAnalysisResponse =
@@ -16,7 +16,7 @@ export type WineAnalysisResponse =
       aging: string
       average_price: string
       analysis: string 
-      sat: SATResultDetails
+      sat: SATResult
       reference_source: string[]
     }
   | {
