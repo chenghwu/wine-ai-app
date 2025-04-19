@@ -45,7 +45,6 @@ async def chat_search_wine(request: MCPRequest):
         return {
             "error": "Gemini returned invalid format."
         }
-    print("Returning response:", wine_summary.get("reference_source"))
 
     if "error" in wine_summary:
         return {
