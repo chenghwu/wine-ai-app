@@ -2,50 +2,90 @@
 
 import React from 'react'
 import { WineAnalysisResponse } from '@/types/WineAnalysisResponse'
+import { SATResult } from '@/types/WineAnalysisResponse'
 
 interface ResultCardProps {
   response: WineAnalysisResponse
 }
 
 export function ResultCard({ response }: ResultCardProps) {
-  // Early return if response is an error
   if (response.status !== 'success') return null
 
   return (
     <div className="mt-8 w-full max-w-2xl bg-gray-800 p-4 rounded shadow">
       <h2 className="text-lg font-semibold mb-2">Analysis Result:</h2>
       <ul className="text-sm space-y-2">
-        <li><strong>Wine:</strong> {response.wine}</li>
-        <li><strong>Appearance:</strong> {response.appearance}</li>
-        <li><strong>Nose:</strong> {response.nose}</li>
-        <li><strong>Palate:</strong> {response.palate}</li>
-        <li><strong>Quality:</strong> {response.quality}</li>
-        <li><strong>Aging Potential:</strong> {response.aging}</li>
-        <li><strong>Avg. Price:</strong> {response.average_price}</li>
-        {typeof response.analysis === 'string' ? (
-            <p>{response.analysis}</p>
-          ) : (
-            <div className="mt-4 space-y-2">
-              <p><strong>Score:</strong> {response.analysis.score}</p>
-              <p><strong>Structured Quality:</strong> {response.analysis.structured_quality}</p>
-              <p><strong>Criteria:</strong> {response.analysis.criteria.join(", ")}</p>
-              <p><strong>Matched Clusters:</strong> {response.analysis.matched_clusters.join(", ")}</p>
-              <p><strong>Descriptors:</strong> {response.analysis.matched_descriptors.join(", ")}</p>
-            </div>
-          )}
-        <li>
-          <strong>Reference Source:</strong>
-          {response.reference_source?.length ? (
-            <ul className="list-disc list-inside ml-4">
-              {response.reference_source.map((src, index) => (
-                <li key={index}>{src}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-400 italic">No sources provided.</p>
-          )}
-        </li>
+        <InfoItem label="Wine" value={response.wine} />
+        <InfoItem label="Appearance" value={response.appearance} />
+        <InfoItem label="Nose" value={response.nose} />
+        <InfoItem label="Palate" value={response.palate} />
+        <InfoItem label="Aging Potential" value={response.aging} />
+        <InfoItem label="Avg. Price" value={response.average_price} />
+        <InfoItem label="Analysis" value={response.analysis} />
+
+        {response.sat && <SATSection sat={response.sat} />}
+        <ReferenceSources sources={response.reference_source} />
       </ul>
     </div>
+  )
+}
+
+// Reusable component for displaying label-value pairs
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <li>
+      <strong>{label}:</strong> {value}
+    </li>
+  )
+}
+
+// Render SAT score section
+function SATSection({ sat }: { sat: SATResult }) {
+  return (
+    <li className="mt-4 space-y-2">
+      <p><strong>Score:</strong> {sat.score}</p>
+      <p><strong>Quality:</strong> {sat.quality}</p>
+      <p><strong>Criteria Met:</strong> {sat.criteria.join(', ')}</p>
+      <p><strong>Clusters:</strong> {sat.clusters.join(', ')}</p>
+      <p><strong>Descriptors:</strong> {sat.descriptors.join(', ')}</p>
+    </li>
+  )
+}
+
+// Render Reference Sources cleanly
+function ReferenceSources({ sources }: { sources: string | string[] | undefined }) {
+  const items = Array.isArray(sources) ? sources : sources ? [sources] : []
+
+  return (
+    <li>
+      {items.length > 0 ? (
+        <div>
+          <strong>Reference Source:</strong>
+          <ul className="list-disc list-inside text-sm text-gray-300 mt-1 space-y-1">
+            {items.map((src, index) => {
+              const isUrl = src.trim().startsWith('http')
+              return (
+                <li key={index}>
+                  {isUrl ? (
+                    <a
+                      href={src}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:underline break-words"
+                    >
+                      {src}
+                    </a>
+                  ) : (
+                    <span>{src}</span>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      ) : (
+        <p className="text-gray-400 italic">No sources provided.</p>
+      )}
+    </li>
   )
 }

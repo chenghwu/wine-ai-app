@@ -68,7 +68,7 @@ def analyze_wine_profile(profile: dict) -> dict:
 
     return {
         "score": score,
-        "structured_quality": quality_map.get(score, "Unknown"),
+        "quality": quality_map.get(score, "Unknown"),
         "criteria": criteria,
         "matched_clusters": sorted(cluster_matches),
         "matched_descriptors": sorted(descriptor_matches)
