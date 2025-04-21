@@ -15,12 +15,16 @@ install: $(VENV_DIR)/bin/activate
 	@echo "Installing dependencies..."
 	$(PIP) install --upgrade pip
 	$(PIP) install -r requirements.txt
-	$(PYTHON) -m playwright install
+#$(PYTHON) -m playwright install
 
 run:
 	@echo "Starting FastAPI app..."
 	$(VENV_DIR)/bin/uvicorn app.main:app --reload
 
+init-db:
+	@echo "Initializing database schema..."
+	$(PYTHON) -m app.db.init_db
+	
 test:
 	@echo "Running tests..."
 	$(VENV_DIR)/bin/pytest -s
@@ -48,7 +52,7 @@ docker-run:
 	docker run -p 8000:8000 --env-file .env wine-ai-app
 
 docker-compose-up:
-	docker-compose up --build
+	docker-compose up --build -d
 
 docker-clean:
 	@echo "Removing Docker containers and images..."

@@ -1,11 +1,35 @@
 services:
   wine-ai-app:
     build: .
+    container_name: wine-api
     ports:
-      - "8000:8000"
+      - "8000:8000"   # Map host:container port
     volumes:
-      - .:/app
+      - .:/app        # Mount the app code into the container
     environment:
-      - ENV=prod
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      ENV: "prod"
+      USE_MOCK: "false"
+      GEMINI_API_KEY: "${GEMINI_API_KEY}"
+      GOOGLE_API_KEY: "${GOOGLE_API_KEY}"
+      GOOGLE_CX: "${GOOGLE_CX}"
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS}"
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      - postgres      # Ensure DB is ready before app starts
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  postgres:
+    image: postgres:15
+    container_name: wine-search-instance
+    restart: always
+    environment:
+      POSTGRES_USER: wine_user
+      POSTGRES_PASSWORD: wine_pass
+      POSTGRES_DB: winesearchdb
+    ports:
+      - "5432:5432"   # Optional if connecting from outside Docker
+    volumes:
+      - postgres_data:/var/lib/postgresql/data    # Persistent volume for data
+
+volumes:
+  postgres_data:

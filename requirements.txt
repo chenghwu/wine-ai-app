@@ -7,5 +7,9 @@ pytest
 pytest-asyncio
 google-generativeai
 bs4
-playwright>=1.44.0
-playwright-stealth
+asyncpg
+databases
+sqlalchemy
+psycopg2-binary
+alembic
+greenlet
