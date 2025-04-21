@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=api_key)                 # 🔹 Configure Gemini only if ENV != dev
+genai.configure(api_key=api_key)
 
 def parse_wine_query_with_llm(query: str) -> dict:
     prompt = f"""

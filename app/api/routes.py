@@ -1,9 +1,13 @@
-from fastapi import APIRouter
-from app.models.mcp_model import MCPRequest, MCPOutput
-from app.analyzers.sat_analyzer import analyze_wine_profile  # Import the SAT scoring engine
-from app.services.llm.llm_agent import summarize_with_gemini
-from app.services.llm.search_and_summarize import summarize_wine_info
-from app.utils.search import google_search_links
+import os, logging
+from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.session import get_async_session
+from app.models.mcp_model import MCPRequest
+from app.services.handlers.wine_summary_handler import (
+    handle_mock_response, handle_db_response, handle_fresh_summary, handle_invalid_summary
+)
 
 router = APIRouter()
 
@@ -19,58 +23,48 @@ async def search_wine(request: MCPRequest):
 
 # Extract user query, use Gimini to search and aggregate info
 @router.post("/chat-search-wine", summary="Search wine info using LLM and return SAT-style analysis")
-async def chat_search_wine(request: MCPRequest):
-    # Step 1: Grab user's free-text query
+async def chat_search_wine(request: MCPRequest, session: AsyncSession = Depends(get_async_session)):
+    # Grab user's free-text query
     query = request.input.get("query", "").strip()
-
-    # Step 2: Check if mock should be used (only in dev mode)
-    use_mock = request.context.dict().get("use_mock", False)
+    if not query:
+        return {"status": "error", "error": "Query is empty."}
 
     ''' TODO:
-    # Use Gemini to extract wine info
-    parsed = parse_wine_query_with_llm(query)
+    # Use Gemini to extract wine info like wine name
+    parsed_info = parse_wine_query_with_llm(query)
     '''
 
-    # Step 3: Summarize the wine info using smart search + LLM pipeline
-    # Need to make sure Gemini output satisfy MCPOutput model
-    wine_summary = summarize_wine_info(query, use_mock)
+    env = os.getenv("ENV", "prod")
+    use_mock = request.context.dict().get("use_mock", False)
+    wine_name = query
 
-    expected_keys = {
-        "wine", "appearance", "nose", "palate", "aging",
-        "average_price", "quality", "analysis", "reference_source"
-    }
+    logger = logging.getLogger(__name__)
+    logger.info(f"Query received: '{wine_name}'")
 
-    if not expected_keys.issubset(wine_summary.keys()):
-        print("Gemini returned format error!!!", wine_summary.keys())
-        return {
-            "error": "Gemini returned invalid format."
-        }
+    # Check if mock should be used (only in dev mode)
+    if env == "dev" and use_mock:
+        return await handle_mock_response(wine_name, request)
 
-    if "error" in wine_summary:
-        return {
-            "status": "error",
-            "input": request.input,
-            "output": wine_summary,
-            "context": request.context.dict()
-        }
+    # Check if summary already exists in DB
+    cached = await handle_db_response(session, wine_name, request)
+    if cached:
+        logger.info(f"Found existing summary in DB.")
+        return cached
 
-    # Step 4: SAT Rule-based analysis
-    sat_result = analyze_wine_profile(wine_summary)
-    wine_summary["sat"] = sat_result
+    # Summarize the wine info using smart search + LLM pipeline
+    return await handle_fresh_summary(session, wine_name, query, request)
 
-    # For MCPOutput schema — required top-level field
-    #wine_summary["quality"] = sat_result.get("structured_quality", "N/A")
+@router.get("/wines", summary="Get all stored wine summaries")
+async def list_all_wines(session: AsyncSession = Depends(get_async_session)):
+    results = await get_all_wine_summaries(session)
+    return [wine.to_dict() for wine in results]
 
-    # Step 5: Ensure structure is complete for MCPOutput
-    #wine_summary.setdefault("average_price", "N/A")
-    #wine_summary.setdefault("reference_source", [])
-
-    # Step 6: Wrap response using MCPOutput
-    output = MCPOutput(**wine_summary)
-
-    return {
-        "status": "analyzed",
-        "input": request.input,
-        "output": output,
-        "context": request.context.dict()  # Ensure dict for JSON serialization
-    }
+# To chek DB connectivity
+@router.get("/db-test", summary="Check DB connectivity")
+async def db_test(session: AsyncSession = Depends(get_async_session)):
+    try:
+        result = await session.execute(text("SELECT 1"))
+        return {"db_working": True}
+    except Exception as e:
+        print("DB connection error:", e)
+        return {"db_working": False}

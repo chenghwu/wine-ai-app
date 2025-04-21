@@ -21,7 +21,7 @@ class MCPOutput(BaseModel):
     average_price: str
     analysis: str
     sat: Dict[str, Any]
-    reference_source: Union[str, List[str]]     # allow both type
+    reference_source: List[str]
 
 # Define the main request schema used in your FastAPI endpoint /analyze
 class MCPRequest(BaseModel):
