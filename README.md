@@ -4,18 +4,44 @@ A full-stack AI-powered wine analysis platform that combines expert-level sensor
 
 ---
 
-## 🚀 Features
+## ⭐️ Features
 
 -  Text-based query understanding using Gemini
 -  Smart wine query extraction using LLM (Gemini)
 -  Google Programmable Search + Web crawling to collect wine data
 -  File-based caching (search, HTML, LLM summaries)
--  SAT analysis aligned with WSET (Wine & Spirit Education Trust)
 -  Gemini LLM integration for summary + evaluation
--  FastAPI-powered backend with Swagger UI
--  Model Context Protocol (MCP) schema for input-output traceability
+-  SAT analysis aligned with WSET (Wine & Spirit Education Trust)
 -  Chat-style frontend powered by React, Next.js, Tailwind CSS
 -  Docker + Makefile support for local development
+
+---
+
+## 🖥️ Tech Stack
+
+### Frontend
+- **React** via **Next.js (App Router)**
+- TypeScript
+- **Tailwind CSS** for utility-first styling
+- Deployed on **Vercel**
+
+### Backend
+- **FastAPI** (Python 3.11)
+- **Gemini LLM** via MCP API
+- **Google Programmable Search API**
+- **File-based and PostgreSQL caching**
+- Deployed on **Render**
+
+### Database
+- **PostgreSQL** (schema-migrated via Alembic)
+- Local: Dockerized
+- Cloud: Render PostgreSQL instance
+
+### DevOps / Infrastructure
+- **Docker** & **Docker Compose** for local development
+- `Makefile` to simplify startup (`make docker-compose-up`)
+- `.env` configuration for secrets + runtime toggles
+- Environment-based mock response engine
 
 ---
 
@@ -23,69 +49,86 @@ A full-stack AI-powered wine analysis platform that combines expert-level sensor
 
 ```
 wine_ai_app/
-├── app/
-│   ├── api/                 # FastAPI routes
-│   ├── analyzers/           # SAT scoring logic
-│   ├── models/              # Pydantic schemas (MCP-based)
-│   ├── services/            # LLM search, summarization, parsing
-│   ├── utils/               # Caching, HTML parsing
-│   └── main.py              # FastAPI app entry
-├── cache/                   # File-based cache for APIs & scrapes
-├── frontend/                # React/Next.js frontend
-│   ├── src/components/      # UI components (ChatBox, ResultCard, etc.)
-│   ├── pages/               # `/wine-intelligence-analysis` app
-│   └── tailwind.config.js   # Tailwind styling
-├── tests/                   # Pytest-based unit tests
-├── .env                     # API keys and configs (only store at local)
-├── Makefile                 # CLI shortcuts for dev + test
-├── Dockerfile               # Containerized setup
-├── docker-compose.yml       # Multi-service setup (optional)
-├── requirements.txt         # Python dependencies
+├── app/                   # FastAPI backend
+│   ├── api/               # Routes
+│   ├── db/                # DB models, session, init
+│   ├── services/          # LLM, rules, handlers
+│   ├── models/            # MCP request models
+│   ├── prompts/           # LLM prompts
+│   └── utils/             # Caching, env, search
+│
+├── frontend/              # Next.js frontend (App Router)
+│   ├── src/components/    # SearchInput, ResultCard, etc.
+│   ├── src/app/           # Main page layout
+│   └── public/            # Static assets
+│
+├── tests/                 # Pytest integration tests
+├── alembic/               # DB migration scripts
+├── cache/                 # HTML/search/summary file cache
+├── Dockerfile             # Backend Dockerfile
+├── docker-compose.yml     # API + DB orchestration
+├── .env                   # API keys and configs (only store at local)
+├── Makefile               # Dev commands
+├── requirements.txt       # Python dependencies
 └── README.md
 ```
 
 ---
 
-## 💻 Local Development
+## 💻 Running Locally
+
+### Prerequisites
+
+- Python 3.11+
+- Node.js 18+
+- Docker (for DB + backend)
+- `.env` and `.env.local` for API keys/config
 
 ### Backend (FastAPI + Gemini)
 
+1. Clone the repo
 ```bash
-# 1. Clone the repo
 git clone https://github.com/chenghwu/wine_ai_app.git && cd wine_ai_app
+```
 
-# 2. Create virtual environment and install dependencies
-make install
-
-# 3. Create a `.env` file at root with your keys
+2. Create `.env` file at root with your keys and environment variables
+```bash
 ENV=dev
 GEMINI_API_KEY=your_google_gemini_key
 GOOGLE_API_KEY=your_google_search_key
 GOOGLE_CX=your_custom_search_engine_id
 # Fill in your GEMINI_API_KEY and GOOGLE_API_KEY
+```
 
-# 6. Start the API
+3. Run backend and DB
+```bash
+make docker-compose-up  # starts backend + PostgreSQL
+# OR for development only
+make install
+make init-db
 make run
 ```
 
 Then visit [http://localhost:8000/swagger](http://localhost:8000/swagger) for Swagger UI.
 
----
-
 ### Frontend (Next.js UI)
 
-```bash
-# In a new terminal
-cd frontend
+In a new terminal
 
-# Install dependencies
-npm install
-
-# Start dev server
-npm run dev
+1. At fronend directory, create `.env.local`
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_SHOW_MOCK_TOGGLE=true
 ```
 
-Then visit [http://localhost:3000/wine-intelligence-analysis](http://localhost:3000/wine-intelligence-analysis)
+2. Run 
+```bash
+cd frontend
+npm install     # Install dependencies
+npm run dev     # Start dev server
+```
+
+Then visit [http://localhost:3000](http://localhost:3000)
 
 ---
 
@@ -97,6 +140,22 @@ make test
 # or run a specific test, ex:
 ./venv/bin/pytest tests/test_llm_search_summary.py
 ```
+
+---
+
+## 🚀 Deployment
+
+### Frontend (Vercel)
+Frontend is deployed to Vercel using:
+- Auto-deployment from GitHub
+- Vercel environment variables (`NEXT_PUBLIC_API_URL`, etc.)
+- `frontend/` as root, using default build settings
+
+### Backend (Render)
+FastAPI backend is deployed on Render:
+- `Dockerfile`-based deployment
+- Environment variables configured in Render Dashboard
+- PostgreSQL and `make docker-compose-up` for local mirroring
 
 ---
 
@@ -123,7 +182,7 @@ make docker-compose-up
 
 ## 💡 Next Steps
 
-- Add PostgreSQL + Redis for persistence and caching
+- Add Redis for persistence and caching
 - Search and crawling improvement
 - UI improvement
 - Add wine label recognition (OCR)
