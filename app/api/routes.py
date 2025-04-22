@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.crud.wine_summary import get_all_wine_summaries
 from app.db.session import get_async_session
 from app.models.mcp_model import MCPRequest
 from app.services.handlers.wine_summary_handler import (

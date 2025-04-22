@@ -1,14 +1,16 @@
 import os
 from logging.config import fileConfig
+from pathlib import Path
 
 # Use sync engine since Alembic doesn't officially support async engines directly
 from sqlalchemy import create_engine, pool
 from sqlalchemy.engine import URL
 from alembic import context
 from dotenv import load_dotenv
+from urllib.parse import quote_plus
 
 # Load .env file to populate os.environ
-load_dotenv()
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
 # Alembic Config
 config = context.config
@@ -21,18 +23,20 @@ if config.config_file_name is not None:
 from app.db.models import Base
 target_metadata = Base.metadata
 
-# Load DATABASE_URL from env
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL is not set!")
-
-# This line must come after DATABASE_URL is loaded
-config.set_main_option("sqlalchemy.url", DATABASE_URL)
+def build_db_url():
+    return URL.create(
+            "postgresql+psycopg2",
+            username=os.getenv("DB_USER", "wine_user"),
+            password=quote_plus(os.getenv("DB_PASSWORD", "wine_pass")),
+            host=os.getenv("DB_HOST", "localhost"),
+            port=os.getenv("DB_PORT", "5432"),
+            database=os.getenv("DB_NAME", "winesearchdb")
+    )
 
 # Offline migration logic
 def run_migrations_offline():
     """Run migrations without connecting to DB (offline)."""
-    url = os.getenv("DATABASE_URL")
+    url = build_db_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -47,15 +51,7 @@ def run_migrations_offline():
 # Online migration logic
 def run_migrations_online():
     """Run migrations connected to DB."""
-    url = URL.create(
-        "postgresql+psycopg2",
-        username=os.getenv("DB_USER", "wine_user"),
-        password=os.getenv("DB_PASSWORD", "wine_pass"),
-        host=os.getenv("DB_HOST", "localhost"),
-        port=os.getenv("DB_PORT", "5432"),
-        database=os.getenv("DB_NAME", "winesearchdb")
-    )
-
+    url = build_db_url()
     connectable = create_engine(url, poolclass=pool.NullPool)
 
     with connectable.connect() as connection:
