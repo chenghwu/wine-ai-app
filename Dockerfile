@@ -17,9 +17,6 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# Install Playwright browsers
-#RUN python -m playwright install
-
 # Expose FastAPI port
 EXPOSE 8000
 
