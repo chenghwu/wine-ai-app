@@ -28,7 +28,7 @@ async def handle_wine_analysis_query(request):
 
     wine_name = ""
     if winery.casefold() == wine.casefold():
-        wine_name = f"{winery} {vinage}"
+        wine_name = f"{winery} {vintage}"
     else:
         wine_name = f"{winery} {wine} {vintage}"
 
