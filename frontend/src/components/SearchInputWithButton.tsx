@@ -14,7 +14,7 @@ export function SearchInputWithButton({ value, onChange, onSubmit, loading }: Pr
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Enter a wine name, e.g. Opus One 2015"
+        placeholder="e.g. Opus One 2015"
         className="w-full px-4 py-2 pr-24 rounded-lg bg-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-rose-800"
       />
       <button

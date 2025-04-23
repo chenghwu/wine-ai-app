@@ -2,9 +2,15 @@ from fastapi import FastAPI
 from app.api.routes import router as api_router
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+import logging
 import os
 
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+)
 
 app = FastAPI(
     title="Wine Intelligence Analyzer",

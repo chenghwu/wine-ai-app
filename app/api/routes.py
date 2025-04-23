@@ -7,10 +7,11 @@ from app.db.crud.wine_summary import get_all_wine_summaries
 from app.db.session import get_async_session
 from app.models.mcp_model import MCPRequest
 from app.services.handlers.wine_summary_handler import (
-    handle_mock_response, handle_db_response, handle_fresh_summary, handle_invalid_summary
+    handle_wine_analysis_query, handle_mock_response, handle_db_response, handle_fresh_summary, handle_invalid_summary
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # Directly pass structured query to LLM for SAT-style output
 @router.post("/search-wine", summary="Search wine info using LLM and return SAT-style analysis")
@@ -22,29 +23,25 @@ async def search_wine(request: MCPRequest):
         "context": request.context.dict()
     }
 
-# Extract user query, use Gimini to search and aggregate info
+# Extract user query, use Google Programmable Search Engine and Gemini to search and aggregate info
 @router.post("/chat-search-wine", summary="Search wine info using LLM and return SAT-style analysis")
 async def chat_search_wine(request: MCPRequest, session: AsyncSession = Depends(get_async_session)):
-    # Grab user's free-text query
-    query = request.input.get("query", "").strip()
-    if not query:
-        return {"status": "error", "error": "Query is empty."}
-
-    ''' TODO:
-    # Use Gemini to extract wine info like wine name
-    parsed_info = parse_wine_query_with_llm(query)
-    '''
-
     env = os.getenv("ENV", "prod")
     use_mock = request.context.dict().get("use_mock", False)
-    wine_name = query
-
-    logger = logging.getLogger(__name__)
-    logger.info(f"Query received: '{wine_name}'")
-
+    
     # Check if mock should be used (only in dev mode)
     if env == "dev" and use_mock:
-        return await handle_mock_response(wine_name, request)
+        logger.info("Using mock response in dev mode.")
+        return await handle_mock_response(request)
+
+    # Parse user query into structured wine info
+    try:
+        parsed = await handle_wine_analysis_query(request)
+        wine_name = parsed["wine_name"]
+        original_query = parsed["original_query"]
+    except Exception as e:
+        logger.exception("Failed to parse wine name from user query")
+        return {"status": "error", "error": f"Failed to parse query: {str(e)}"}
 
     # Check if summary already exists in DB
     cached = await handle_db_response(session, wine_name, request)
@@ -53,7 +50,7 @@ async def chat_search_wine(request: MCPRequest, session: AsyncSession = Depends(
         return cached
 
     # Summarize the wine info using smart search + LLM pipeline
-    return await handle_fresh_summary(session, wine_name, query, request)
+    return await handle_fresh_summary(session, wine_name, original_query, request)
 
 @router.get("/wines", summary="Get all stored wine summaries")
 async def list_all_wines(session: AsyncSession = Depends(get_async_session)):
