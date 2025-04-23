@@ -42,7 +42,7 @@ def summarize_with_gemini(wine_name: str, content: str, sources: list[str]) -> d
 
 def parse_wine_query_with_gemini(query: str) -> dict:
     """
-    Use Gemini to extract structured wine info (name, vintage) from a free-form query.
+    Use Gemini to extract structured wine info (winery, name, vintage) from a free-form query.
     """
     prompt = get_wine_from_query_prompt(query)
     raw_text = call_gemini_sync(prompt, temperature=0.3)
@@ -50,9 +50,14 @@ def parse_wine_query_with_gemini(query: str) -> dict:
 
     # Ensure structure
     if not isinstance(parsed, dict):
-        return {"wine_name": query.strip(), "vintage": ""}
+        return {
+            "winery": "",
+            "wine_name": query.strip(),
+            "vintage": ""
+        }
     
     return {
+        "winery": parsed.get("winery", ""),
         "wine_name": parsed.get("wine_name", query.strip()),
         "vintage": parsed.get("vintage", "")
     }

@@ -40,11 +40,11 @@ Put "N/A" in value if unknown.
 def get_wine_from_query_prompt(query: str) -> str:
     return f"""
 You are a Master of Wine, an expert in wine classification and blind tasting.
-Extract the **exact wine name** and **vintage (year)** from the following user query.
+Extract the **exact winery**, **exact wine name** and **vintage (year)** from the following user query.
 Only extract what's **clearly mentioned** in the query. Do **not guess** or substitute other wines.
 If the vintage is not mentioned, return an empty string for vintage.
 Do not include region, grape, or other descriptors unless part of the wine's official name.
-Return in **strict JSON format** with "wine_name" and "vintage" keys.
+Return in **strict JSON format** with "winery", "wine_name" and "vintage" keys.
 
 ---
 
@@ -55,13 +55,15 @@ User Query:
 
 Output Format:
 {{
+  "winery": "...",
   "wine_name": "...",
   "vintage": "..."
 }}
 
 Examples:
-Input: "opus one 2015" → {{ "wine_name": "Opus One", "vintage": "2015" }}
-Input: "opus one" → {{ "wine_name": "Opus One", "vintage": "" }}
-Input: "1978 château margaux" → {{ "wine_name": "Château Margaux", "vintage": "1978" }}
-Input: "any info about insignia phelps 2013?" → {{ "wine_name": "Insignia Phelps", "vintage": "2013" }}
+Input: "opus one 2015" → {{ "winery": "Opus One", "wine_name": "Opus One", "vintage": "2015" }}
+Input: "opus one" → {{ "winery": "Opus One", "wine_name": "Opus One", "vintage": "" }}
+Input: "1978 château margaux" → {{ "winery": "Château Margaux", "wine_name": "Château Margaux", "vintage": "1978" }}
+Input: "D2 2022" → {{ "winery": "DeLille Cellars", "wine_name": "D2", "vintage": "2022" }}
+Input: "any info about insignia phelps 2013?" → {{ "winery": "Joseph Phelps", "wine_name": "Insignia", "vintage": "2013" }}
 """.strip()
