@@ -1,6 +1,7 @@
 import requests
-from app.utils.env import get_google_keys
+from urllib.parse import urlparse
 from app.utils.cache import get_cache_or_fetch
+from app.utils.env import get_google_keys
 
 TRUSTED_DOMAINS = [
     "wineenthusiast.com",
@@ -14,35 +15,54 @@ TRUSTED_DOMAINS = [
     "wine-searcher.com"
 ]
 
-def google_search_links(wine_name: str, max_results: int = 10) -> list[str]:
+def google_search_links(wine_name: str, max_results: int = 20) -> list[str]:
+    '''
+    Custom Search API provides 100 search queries per day for free
+    Each query returns maximum 10 results, can use pagination for more.
+    Setting up max_results costs (max_results // 10) queries.
+    '''
     api_key, cx = get_google_keys()
     query = f"{wine_name} wine review"
     
     def fetch_urls():
-        try:
+        seen_domains = set()
+        results = []
+        pages = (max_results + 9) // 10  # ceil(max_results / 10)
+
+        for i in range(pages):
+            start = 1 + i * 10
             params = {
                 "key": api_key,
                 "cx": cx,
                 "q": query,
-                "num": max_results
+                "num": min(10, max_results - len(results)),
+                "start": start
             }
-            response = requests.get("https://www.googleapis.com/customsearch/v1", params=params)
-            response.raise_for_status()
-            results = response.json()
 
-            urls = []
-            for item in results.get("items", []):
-                link = item.get("link")
-                if any(domain in link for domain in TRUSTED_DOMAINS):
-                    print(f"Trusted link {link}")
-                
-                # Include not only trusted domain links for now
-                urls.append(link)
+            try:
+                response = requests.get("https://www.googleapis.com/customsearch/v1", params=params)
+                response.raise_for_status()
+                for item in response.json().get("items", []):
+                    link = item.get("link")
+                    if not link:
+                        continue
 
-            return urls
+                    domain = urlparse(link).netloc.replace("www.", "")
+                    if domain not in seen_domains:
+                        seen_domains.add(domain)
+                        results.append(link)
 
-        except Exception as e:
-            print(f"Google Search API failed: {e}")
-            return []
+                        # Include not only trusted domain links for now
+                        if any(t in domain for t in TRUSTED_DOMAINS):
+                            print(f"Trusted link: {link}")
+
+                    if len(results) >= max_results:
+                        return results
+
+            except Exception as e:
+                print(f"[Google API error page {i+1}]: {e}")
+                break
+
+        return results
 
     return get_cache_or_fetch("search", query, fetch_urls)

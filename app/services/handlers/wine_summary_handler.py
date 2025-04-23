@@ -6,6 +6,7 @@ from app.services.rules.sat_analyzer import analyze_wine_profile
 from app.utils.mock import generate_mock_summary
 from app.utils.normalize import to_title_case_wine_name
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ async def handle_wine_analysis_query(request):
     logger.info(f"Parsed wine info - 'winery: {winery}, wine: {wine}, vintage: {vintage}")
 
     wine_name = ""
-    if winery.casefold() == wine.casefold():
+    if wine.casefold() in winery.casefold():
         wine_name = f"{winery} {vintage}"
     else:
         wine_name = f"{winery} {wine} {vintage}"
@@ -81,7 +82,7 @@ async def handle_fresh_summary(session, wine_name, query, request):
 
     # SAT Rule-based analysis
     summary["sat"] = analyze_wine_profile(summary)
-    
+
     # Save to DB
     logger.info(f"Saving to DB: '{wine_name}'")
     try:
