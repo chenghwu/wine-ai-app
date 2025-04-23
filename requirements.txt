@@ -5,6 +5,8 @@ python-multipart
 python-dotenv
 pytest
 pytest-asyncio
+httpx
+aiofiles
 google-generativeai
 bs4
 asyncpg
