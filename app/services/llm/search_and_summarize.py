@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from app.services.llm.llm_agent import summarize_with_gemini
+from app.services.llm.gemini_engine import summarize_with_gemini
 from app.utils.cache import get_cache_or_fetch
 from app.utils.search import google_search_links
 from app.db.session import get_async_session

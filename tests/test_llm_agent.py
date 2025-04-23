@@ -1,6 +1,6 @@
 import os
 import pytest
-from app.services.llm.llm_agent import summarize_with_gemini
+from app.services.llm.gemini_engine import summarize_with_gemini
 
 @pytest.fixture
 def dummy_wine_info():
@@ -41,7 +41,7 @@ def test_summarize_with_gemini_in_prod(monkeypatch, dummy_wine_info):
         def generate_content(self, prompt):
             return MockResponse()
 
-    monkeypatch.setattr("app.services.llm.llm_agent.genai.GenerativeModel", lambda _: MockModel())
+    monkeypatch.setattr("app.services.llm.gemini_engine.genai.GenerativeModel", lambda _: MockModel())
 
     result = summarize_with_gemini(
         dummy_wine_info["wine_name"],

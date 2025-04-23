@@ -1,8 +1,8 @@
 from app.models.mcp_model import MCPOutput
 
-def generate_mock_summary(wine_name: str) -> MCPOutput:
+def generate_mock_summary() -> MCPOutput:
     mock_data = {
-        "wine": wine_name,
+        "wine": "Mock Wine 2018",
         "appearance": "Deep ruby",
         "nose": "Medium+ aromas of cassis, tobacco, mocha",
         "palate": "Full-bodied, high acidity, ripe tannins, long finish",
@@ -19,8 +19,8 @@ def generate_mock_summary(wine_name: str) -> MCPOutput:
             "quality": "Very Good",
             "criteria": ["Balance", "Length", "Complexity"],
             "clusters": ["Black fruit"],
-            "descriptors": ["cassis", "tobacco", "mocha"]
+            "descriptors": ["Cassis", "Tobacco", "Mocha"]
         },
-        "reference_source": ["Mock: wineSpectator.com"]
+        "reference_source": ["Mock: winespectator.com"]
     }
     return MCPOutput(**mock_data)
