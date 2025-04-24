@@ -11,7 +11,7 @@ import time
 logger = logging.getLogger(__name__)
 
 EXPECTED_SUMMARY_KEYS = {
-    "wine", "appearance", "nose", "palate", "aging",
+    "wine", "grape_varieties", "appearance", "nose", "palate", "aging",
     "average_price", "quality", "analysis", "reference_source"
 }
 
