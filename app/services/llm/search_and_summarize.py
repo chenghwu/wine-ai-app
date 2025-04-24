@@ -38,7 +38,7 @@ async def fetch_full_text_from_url_async(url: str) -> str:
 async def aggregate_page_content_async(
     search_links: list[str],
     wine_name: str,
-    max_concurrent: int = 3) -> str:
+    max_concurrent: int = 5) -> str:
     sem = asyncio.Semaphore(max_concurrent)  # limits concurrent fetches
 
     async def get_text(url: str) -> str:

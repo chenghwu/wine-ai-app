@@ -13,6 +13,7 @@ class MCPContext(BaseModel):
 
 class MCPOutput(BaseModel):
     wine: str
+    grape_varieties: str
     appearance: str
     nose: str
     palate: str

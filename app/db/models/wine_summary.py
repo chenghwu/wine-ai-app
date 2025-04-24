@@ -8,7 +8,7 @@ class WineSummary(Base):
     id = Column(Integer, primary_key=True, index=True)
     wine = Column(String(255), index=True, nullable=False)
     query_text = Column(Text, nullable=False)
-
+    grape_varieties = Column(String(255), nullable=False, server_default="")
     appearance = Column(Text)
     nose = Column(Text)
     palate = Column(Text)
@@ -25,6 +25,7 @@ class WineSummary(Base):
         return {
             "wine": self.wine or "",
             "query_text": self.query_text or "",
+            "grape_varieties": self.grape_varieties or "",
             "appearance": self.appearance or "",
             "nose": self.nose or "",
             "palate": self.palate or "",

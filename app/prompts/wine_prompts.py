@@ -24,6 +24,7 @@ Each field MUST contain the required sub-elements as described.
 
 {{
   "wine": "{wine_name}",
+  "grape_varieties": "Grape varieties composition of the wine (e.g. 85% Cabernet Sauvignon, 15% Merlot)"
   "appearance": "clarity, intensity, color (e.g., clear, medium intensity, ruby)",
   "nose": "cleanliness, intensity, list of aroma characteristics (e.g., clean, pronounced, red cherry, blackcurrant, cedar, leather)",
   "palate": "sweetness, acidity, tannin, alcohol, body, flavor intensity, flavor characteristics, finish, balanced or not (e.g., dry, high acidity, medium+ tannin, full body, pronounced intensity, flavors of blackberry, vanilla, mushroom, long finish, balanced)",
@@ -39,12 +40,27 @@ Put "N/A" in value if unknown.
 
 def get_wine_from_query_prompt(query: str) -> str:
     return f"""
-You are a Master of Wine, an expert in wine classification and blind tasting.
-Extract the **exact winery**, **exact wine name** and **vintage (year)** from the following user query.
+You are a Master of Wine, specializing in wine classification and blind tasting.
+Your job is to extract structured information from unstructured user wine queries.
+
+From the following query, extract:
+- **winery** (producer or estate name)
+- **wine name** (official product label name)
+- **vintage** (year, if present)
+
+If the **winery is not explicitly mentioned**, but the **wine name is unique or well-known**, 
+return the correct winery based on established wine knowledge.
+Do **not guess** if the wine name is too generic or uncertain.
+If you're not sure, return the wine name and leave winery as an empty string.
 Only extract what's **clearly mentioned** in the query. Do **not guess** or substitute other wines.
-If the vintage is not mentioned, return an empty string for vintage.
-Do not include region, grape, or other descriptors unless part of the wine's official name.
-Return in **strict JSON format** with "winery", "wine_name" and "vintage" keys.
+Avoid including grape, region, or descriptors unless they are part of the official wine name.
+
+Respond strictly in the following JSON format:
+{{
+  "winery": "...",
+  "wine_name": "...",
+  "vintage": "..."
+}}
 
 ---
 
@@ -52,13 +68,6 @@ User Query:
 "{query}"
 
 ---
-
-Output Format:
-{{
-  "winery": "...",
-  "wine_name": "...",
-  "vintage": "..."
-}}
 
 Examples:
 Input: "opus one 2015" → {{ "winery": "Opus One", "wine_name": "Opus One", "vintage": "2015" }}
