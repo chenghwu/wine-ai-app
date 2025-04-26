@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { MockToggleButton } from '@/components/MockToggleButton'
-import { ResultCard } from '@/components/ResultCard'
+import { ResultCard } from '@/components/ResultCard/ResultCard'
 import { SearchInputWithButton } from '@/components/SearchInputWithButton'
 import { WineAnalysisResponse } from '@/types/WineAnalysisResponse'
 
