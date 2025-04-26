@@ -19,8 +19,8 @@ def generate_mock_summary() -> MCPOutput:
             "score": 3,
             "quality": "Very Good",
             "criteria": ["Balance", "Length", "Complexity"],
-            "clusters": ["Black fruit"],
-            "descriptors": ["Cassis", "Tobacco", "Mocha"]
+            "clusters": ["black fruit", "spice"],
+            "descriptors": ["cassis", "tobacco", "mocha"]
         },
         "reference_source": ["Mock: winespectator.com"]
     }

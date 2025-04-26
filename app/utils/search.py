@@ -12,7 +12,11 @@ TRUSTED_DOMAINS = [
     "totalwine.com",
     "b-21.com",
     "vivino.com",
-    "wine-searcher.com"
+    "wine-searcher.com",
+    "wine.com",
+    "robertparker.com",
+    "vinous.com",
+    "thewinecellarinsider.com"
 ]
 
 def google_search_links(wine_name: str, max_results: int = 20) -> list[str]:

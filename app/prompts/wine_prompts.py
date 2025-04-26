@@ -28,7 +28,7 @@ Each field MUST contain the required sub-elements as described.
   "appearance": "clarity, intensity, color (e.g., clear, medium intensity, ruby)",
   "nose": "cleanliness, intensity, list of aroma characteristics (e.g., clean, pronounced, red cherry, blackcurrant, cedar, leather)",
   "palate": "sweetness, acidity, tannin, alcohol, body, flavor intensity, flavor characteristics, finish, balanced or not (e.g., dry, high acidity, medium+ tannin, full body, pronounced intensity, flavors of blackberry, vanilla, mushroom, long finish, balanced)",
-  "aging": "Expected aging potential and why (e.g., Can age for 10–15 years due to high tannin, acidity, and concentration)",
+  "aging": "Expected aging potential and why (e.g., Can age for 10–15 years due to high tannin, acidity, and concentration; or not suitable for bottle ageing)",
   "quality": "Choose one: Poor, Acceptable, Good, Very Good, Outstanding",
   "average_price": "Estimated average market price in U.S. dollars (e.g. US$120)",
   "analysis": "Brief summary of why you came to these conclusions using SAT criteria",
