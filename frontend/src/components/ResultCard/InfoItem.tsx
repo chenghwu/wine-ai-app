@@ -9,7 +9,7 @@ interface InfoItemProps {
 export function InfoItem({ label, value }: InfoItemProps) {
     return (
       <li>
-        <span className="text-zinc-400 font-medium">{label}:</span>{' '}
+        <span className="text-zinc-400 font-medium mr-1">{label}:</span>
         <span className="text-zinc-200">{value}</span>
       </li>
     )

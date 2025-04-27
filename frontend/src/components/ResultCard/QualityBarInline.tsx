@@ -24,7 +24,7 @@ export function QualityBarInline({ quality }: QualityBarInlineProps) {
         </div>
   
         {/* Labels below each segment */}
-        <div className="flex justify-between w-full text-[9px] text-zinc-400 mt-1">
+        <div className="flex justify-between w-full text-[9px] text-zinc-200 mt-1">
           {levels.map((label) => (
             <span
             key={label}

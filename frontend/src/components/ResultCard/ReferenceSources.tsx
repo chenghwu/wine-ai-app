@@ -2,6 +2,7 @@
 'use client'
 
 import { useState } from 'react'
+import { getDomainFromUrl } from '@/utils/url';
 
 interface ReferenceSourcesProps {
   sources: string | string[] | undefined
@@ -15,8 +16,10 @@ export function ReferenceSources({ sources }: ReferenceSourcesProps) {
     <li className="mt-4 border-t border-zinc-700 pt-4 w-full max-w-full overflow-hidden">
       {items.length > 0 ? (
         <div>
-          <span className="text-zinc-400 font-medium">Reference Source:</span>
-          <ul className="list-disc list-inside text-sm text-zinc-300 mt-1 space-y-1">
+          <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-3">
+            Reference Source
+          </h3>
+          <ul className="text-sm text-zinc-400 mt-1 space-y-1">
             {items.slice(0, collapsed ? 7 : items.length).map((src, index) => {
               const isUrl = src.trim().startsWith('http')
               return (
@@ -26,9 +29,9 @@ export function ReferenceSources({ sources }: ReferenceSourcesProps) {
                       href={src}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-400 hover:underline break-words"
+                      className="text-zinc-400 hover:text-white underline break-words"
                     >
-                      {src}
+                      {getDomainFromUrl(src)}
                     </a>
                   ) : (
                     <span>{src}</span>
