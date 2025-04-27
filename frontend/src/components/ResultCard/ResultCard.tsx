@@ -18,7 +18,7 @@ export function ResultCard({ response }: ResultCardProps) {
         Analysis Result - {response.wine}
       </h2>
 
-      <ul className="space-y-2 text-sm text-zinc-300">
+      <ul className="space-y-2 text-sm">
         <InfoItem label="Grape Varieties" value={response.grape_varieties} />
         <InfoItem label="Appearance" value={response.appearance} />
         <InfoItem label="Nose" value={response.nose} />
