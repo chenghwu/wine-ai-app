@@ -2,7 +2,7 @@ export const getDomainFromUrl = (url: string): string => {
     try {
       const parsedUrl = new URL(url);
       return parsedUrl.hostname;    // KEEP www. prefix if present
-    } catch (error) {
+    } catch {
       return url;   // fallback
     }
   };
