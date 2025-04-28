@@ -83,3 +83,7 @@ async def db_test(session: AsyncSession = Depends(get_async_session)):
     except Exception as e:
         print("DB connection error:", e)
         return {"db_working": False}
+
+@router.api_route("/api/healthcheck", methods=["GET", "HEAD"])
+async def healthcheck():
+    return {"status": "healthy"}
