@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from app.exceptions import WineAppError, GoogleSearchApiError, GeminiApiError
 from app.services.llm.gemini_engine import summarize_with_gemini
 from app.utils.cache import get_cache_or_fetch_async
-from app.utils.search import google_search_links
+from app.utils.search import google_search_links_with_retry
 from app.db.session import get_async_session
 from app.db.crud.wine_summary import get_wine_summary_by_name, save_wine_summary
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -77,7 +77,7 @@ async def summarize_wine_info(wine_name: str) -> dict:
 
         # Step 1: Get all links from google search engine
         t0 = time.perf_counter()
-        search_links = google_search_links(wine_name)
+        search_links = google_search_links_with_retry(wine_name)
         timings["google_search"] = time.perf_counter() - t0
 
         # Step 2: Crawl the links and aggregate contents
