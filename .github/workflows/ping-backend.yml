@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Curl ping to backend
         run: |
-          curl -s --retry 3 --max-time 10 https://wine-ai-app.onrender.com/api/db-test || echo "Ping failed"
+          curl -s --retry 5 --retry-delay 10 --max-time 10 https://wine-ai-app.onrender.com/api/db-test || exit 1
