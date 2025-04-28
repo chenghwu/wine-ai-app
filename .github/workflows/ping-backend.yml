@@ -1,0 +1,14 @@
+name: Keep Render Backend Warm
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # Every 5 minutes
+  workflow_dispatch: # Allow manual trigger too
+
+jobs:
+  ping-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Curl ping to backend
+        run: |
+          curl -s --retry 3 --max-time 10 https://wine-ai-app.onrender.com/api/db-test || echo "Ping failed"
