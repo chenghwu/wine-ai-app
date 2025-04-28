@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 @router.post("/chat-search-wine", summary="Search wine info using LLM and return SAT-style analysis")
 async def chat_search_wine(request: MCPRequest, session: AsyncSession = Depends(get_async_session)):
     env = os.getenv("ENV", "prod")
-    use_mock = request.context.dict().get("use_mock", False)
+    use_mock = request.context.model_dump().get("use_mock", False)
     
     # Mock logic (only in dev mode)
     if env == "dev" and use_mock:
