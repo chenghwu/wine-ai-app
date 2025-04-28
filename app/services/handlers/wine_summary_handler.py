@@ -47,7 +47,7 @@ async def handle_mock_response(request):
         "status": "mocked",
         "input": request.input,
         "output": output,
-        "context": request.context.dict()
+        "context": request.context.model_dump()
     }
 
 async def handle_db_response(session, wine_name, request):
@@ -57,7 +57,7 @@ async def handle_db_response(session, wine_name, request):
             "status": "analyzed",
             "input": request.input,
             "output": MCPOutput(**existing.to_dict()),
-            "context": request.context.dict()
+            "context": request.context.model_dump()
         }
     return None
 
@@ -66,7 +66,7 @@ async def handle_invalid_summary(summary, request, error_message: str = "An unkn
         "status": "error",
         "error": summary.get("error", error_message),
         "input": request.input,
-        "context": request.context.dict()
+        "context": request.context.model_dump()
     }
 
 async def handle_fresh_summary(session, wine_name, query, request):
@@ -109,5 +109,5 @@ async def handle_fresh_summary(session, wine_name, query, request):
         "status": "analyzed",
         "input": request.input,
         "output": MCPOutput(**summary),
-        "context": request.context.dict()  # Ensure dict for JSON serialization
+        "context": request.context.model_dump()  # Ensure dict for JSON serialization
     }

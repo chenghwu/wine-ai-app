@@ -26,6 +26,6 @@ class MCPOutput(BaseModel):
 
 # Define the main request schema used in your FastAPI endpoint /analyze
 class MCPRequest(BaseModel):
-    input: Dict[str, Any] = Field(..., example={"query": "Opus One 2015"})
+    input: Dict[str, Any] = Field(..., json_schema_extra={"example": {"query": "Opus One 2015"}})
     output: Optional[MCPOutput] = None
     context: MCPContext
