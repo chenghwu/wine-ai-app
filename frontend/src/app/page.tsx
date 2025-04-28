@@ -67,9 +67,10 @@ export default function WineChatPage() {
         loading={loading}
       />
       {response?.status === 'error' && (
-        <p className="text-red-500 mt-4">{response.error}</p>
+        <div className="bg-red-950 border border-red-700 p-3 rounded-md text-center text-red-400 text-sm break-words mt-4">
+          {response.error || "An unexpected error occurred. Please try again."}
+        </div>
       )}
-
       {response?.status === 'success' && (
         <ResultCard response={response} />
       )}
