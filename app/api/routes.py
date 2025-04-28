@@ -1,6 +1,5 @@
 import os, logging
-from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.crud.wine_summary import get_all_wine_summaries
@@ -8,21 +7,11 @@ from app.db.session import get_async_session
 from app.exceptions import GoogleSearchApiError, GeminiApiError
 from app.models.mcp_model import MCPRequest
 from app.services.handlers.wine_summary_handler import (
-    handle_wine_analysis_query, handle_mock_response, handle_db_response, handle_fresh_summary, handle_invalid_summary
+    handle_wine_analysis_query, handle_mock_response, handle_db_response, handle_fresh_summary
 )
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-# Directly pass structured query to LLM for SAT-style output
-@router.post("/search-wine", summary="Search wine info using LLM and return SAT-style analysis")
-async def search_wine(request: MCPRequest):  
-    return {
-        "status": "searched",
-        "input": request.input,
-        "output": generate_wine_analysis_from_llm(request.input),
-        "context": request.context.dict()
-    }
 
 # Extract user query, use Google Programmable Search Engine and Gemini to search and aggregate info
 @router.post("/chat-search-wine", summary="Search wine info using LLM and return SAT-style analysis")
@@ -74,11 +63,18 @@ async def list_all_wines(session: AsyncSession = Depends(get_async_session)):
     results = await get_all_wine_summaries(session)
     return [wine.to_dict() for wine in results]
 
-@router.api_route("/healthcheck", methods=["GET", "HEAD"], summary="Healthcheck endpoint")
-async def healthcheck(session: AsyncSession = Depends(get_async_session)):
-    try:
-        # lightweight DB check
-        await session.execute("SELECT 1")
+@router.api_route("/healthcheck", methods=["GET", "HEAD"], summary="Healthcheck endpoints")
+async def healthcheck(
+    deep: bool = Query(default=False),
+    session: AsyncSession = Depends(get_async_session)
+):
+    if not deep:
+        # Shallow healthcheck (only server status)
         return {"status": "healthy"}
+
+    try:
+        # Deep healthcheck (include DB check)
+        await session.execute(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}
     except Exception:
-        return {"status": "unhealthy"}, 500
+        return {"status": "unhealthy", "database": "unreachable", "error": str(e)}
