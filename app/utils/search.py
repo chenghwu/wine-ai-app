@@ -1,5 +1,6 @@
 import logging
 import requests
+import time
 from urllib.parse import urlparse
 from app.exceptions import GoogleSearchApiError
 from app.utils.cache import get_cache_or_fetch
@@ -23,7 +24,12 @@ TRUSTED_DOMAINS = [
     "thewinecellarinsider.com"
 ]
 
-def google_search_links(wine_name: str, max_results: int = 20) -> list[str]:
+def google_search_links_with_retry(
+    wine_name: str,
+    max_results: int = 20,
+    max_retries: int = 5,
+    delay_seconds: float = 2.0
+) -> list[str]:
     '''
     Custom Search API provides 100 search queries per day for free
     Each query returns maximum 10 results, can use pagination for more.
@@ -37,8 +43,9 @@ def google_search_links(wine_name: str, max_results: int = 20) -> list[str]:
         results = []
         pages = (max_results + 9) // 10  # ceil(max_results / 10)
 
-        for i in range(pages):
-            start = 1 + i * 10
+        for page in range(pages):
+            start = 1 + page * 10
+            url = "https://www.googleapis.com/customsearch/v1"
             params = {
                 "key": api_key,
                 "cx": cx,
@@ -47,29 +54,35 @@ def google_search_links(wine_name: str, max_results: int = 20) -> list[str]:
                 "start": start
             }
 
-            try:
-                response = requests.get("https://www.googleapis.com/customsearch/v1", params=params)
-                response.raise_for_status()
-                for item in response.json().get("items", []):
-                    link = item.get("link")
-                    if not link:
-                        continue
+            for attempt in range(1, max_retries + 1):
+                try:
+                    response = requests.get(url, params=params)
+                    response.raise_for_status()
+                    for item in response.json().get("items", []):
+                        link = item.get("link")
+                        if not link:
+                            continue
 
-                    domain = urlparse(link).netloc.replace("www.", "")
-                    if domain not in seen_domains:
-                        seen_domains.add(domain)
-                        results.append(link)
+                        domain = urlparse(link).netloc.replace("www.", "")
+                        if domain not in seen_domains:
+                            seen_domains.add(domain)
+                            results.append(link)
 
-                        # Include not only trusted domain links for now
-                        if any(t in domain for t in TRUSTED_DOMAINS):
-                            logger.info(f"Trusted link: {link}")
+                            # Include not only trusted domain links for now
+                            if any(t in domain for t in TRUSTED_DOMAINS):
+                                logger.info(f"Trusted link: {link}")
 
-                    if len(results) >= max_results:
-                        return results
+                        if len(results) >= max_results:
+                            return results
 
-            except Exception as e:
-                logger.exception(f"[Google API error page {i+1}]: {e}")
-                raise GoogleSearchApiError(f"Google Search API failed: {e}")
+                except Exception as e:
+                    if attempt == max_retries:
+                        logger.exception(f"[Google API error page {page+1}]: {e}")
+                        raise GoogleSearchApiError(f"Google Search API failed: {e}")
+
+                    wait_time = delay_seconds * attempt     #linear backoff
+                    logger.warning(f"Google API call failed (attempt {attempt}), retrying in {wait_time:.1f}s... Error: {e}")
+                    time.sleep(wait_time)
 
         return results
 

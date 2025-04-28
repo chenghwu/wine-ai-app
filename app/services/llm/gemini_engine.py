@@ -1,6 +1,7 @@
 import google.generativeai as genai
 import logging
 import os
+import time
 from dotenv import load_dotenv
 from app.exceptions import GeminiApiError
 from app.utils.cache import get_cache_or_fetch
@@ -10,44 +11,51 @@ from app.prompts.wine_prompts import get_sat_prompt, get_wine_from_query_prompt
 
 logger = logging.getLogger(__name__)
 
-def call_gemini_sync(prompt: str, temperature: float = 0.7) -> str:
+def call_gemini_sync_with_retry(
+    prompt: str,
+    temperature: float = 0.7,
+    max_retries: int = 5,
+    delay_seconds: float = 2.0
+) -> str:
     """
     Call Gemini synchronously using the GenerativeAI client.
     Temperature: 0 (more factual) - 1.0 (exploratory)
     """
     _, _, model = setup_gemini_env()
     
-    try:
-        response = model.generate_content(
-            prompt,
-            generation_config={"temperature": temperature}
-        )
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = model.generate_content(
+                prompt,
+                generation_config={"temperature": temperature}
+            )
+            return response.text
 
-        return response.text
-    except Exception as e:
-        return f"[Gemini error] {e}"
+        except Exception as e:
+            if attempt == max_retries:
+                raise GeminiApiError(f"Gemini API failed after {max_retries} retries: {e}")
+
+            wait_time = delay_seconds * attempt     # linear backoff
+            logger.warning(f"Gemini API call failed (attempt {attempt}), retrying in {wait_time}s... Error: {e}")
+            time.sleep(wait_time)
 
 def summarize_with_gemini(wine_name: str, content: str, sources: list[str]) -> dict:
     """
     Use Gemini to summarize wine info using SAT-style prompt and parse JSON output.
-    Caches result using wine_name as key.
     """
-    def fetch_summary():
-        prompt = get_sat_prompt(wine_name, content, sources)
-        try:
-            raw_text = call_gemini_sync(prompt, temperature=0.7)
-            logger.info(f"Gemini raw output:\n{raw_text}")
-            parsed = parse_json_from_text(raw_text)
+    prompt = get_sat_prompt(wine_name, content, sources)
+    try:
+        raw_text = call_gemini_sync_with_retry(prompt, temperature=0.7)
+        logger.info(f"Gemini raw output:\n{raw_text}")
+        parsed = parse_json_from_text(raw_text)
 
-            if "error" in parsed:
-                raise GeminiApiError(f"Gemini error: {parsed['error']}, 'wine': {wine_name}")
+        if "error" in parsed:
+            raise GeminiApiError(f"Gemini error: {parsed['error']}, 'wine': {wine_name}")
 
-            return parsed
-        
-        except Exception as e:
-            raise GeminiApiError(f"Gemini API call for summary failed: {e}")
-
-    return get_cache_or_fetch("summary", wine_name, fetch_summary)
+        return parsed
+    
+    except Exception as e:
+        raise GeminiApiError(f"Gemini API call for summary failed: {e}")
 
 def parse_wine_query_with_gemini(query: str) -> dict:
     """
@@ -55,7 +63,7 @@ def parse_wine_query_with_gemini(query: str) -> dict:
     """
     prompt = get_wine_from_query_prompt(query)
     try:
-        raw_text = call_gemini_sync(prompt, temperature=0.3)
+        raw_text = call_gemini_sync_with_retry(prompt, temperature=0.3)
         parsed = parse_json_from_text(raw_text)
 
         # Ensure structure
