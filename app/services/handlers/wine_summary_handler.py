@@ -61,24 +61,35 @@ async def handle_db_response(session, wine_name, request):
         }
     return None
 
-async def handle_invalid_summary(summary, request):
+async def handle_invalid_summary(summary, request, error_message: str = "An unknown error occurred"):
     return {
         "status": "error",
+        "error": summary.get("error", error_message),
         "input": request.input,
-        "output": summary,
         "context": request.context.dict()
     }
 
 async def handle_fresh_summary(session, wine_name, query, request):
-    summary = await summarize_wine_info(wine_name)
+    try:
+        summary = await summarize_wine_info(wine_name)
+    except Exception as e:
+        logger.error(f"Error during wine summary: {e}")
+        return await handle_invalid_summary(
+            {"error": "Failed to summarize wine information. Please try again later."},
+            request
+        )
+
+    if "error" in summary:
+        logger.error(f"Summarization returned error: {summary['error']}")
+        return await handle_invalid_summary(summary, request)
 
     missing_keys = EXPECTED_SUMMARY_KEYS - summary.keys()
     if missing_keys:
         logger.error(f"Missing key attributes from Gemini summary: {missing_keys}")
-        return await handle_invalid_summary(summary, request)
-
-    if "error" in summary:
-        return await handle_invalid_summary(summary, request)
+        return await handle_invalid_summary(
+            {"error": "Incomplete wine analysis generated. Please retry."},
+            request
+        )
 
     # SAT Rule-based analysis
     summary["sat"] = analyze_wine_profile(summary)
@@ -92,6 +103,7 @@ async def handle_fresh_summary(session, wine_name, query, request):
         })
     except Exception as e:
         logger.error(f"Failed to save summary to DB: {e}")
+        # Non-blocking, still return successful response
 
     return {
         "status": "analyzed",

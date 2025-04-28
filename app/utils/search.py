@@ -1,7 +1,11 @@
+import logging
 import requests
 from urllib.parse import urlparse
+from app.exceptions import GoogleSearchApiError
 from app.utils.cache import get_cache_or_fetch
 from app.utils.env import get_google_keys
+
+logger = logging.getLogger(__name__)
 
 TRUSTED_DOMAINS = [
     "wineenthusiast.com",
@@ -58,14 +62,14 @@ def google_search_links(wine_name: str, max_results: int = 20) -> list[str]:
 
                         # Include not only trusted domain links for now
                         if any(t in domain for t in TRUSTED_DOMAINS):
-                            print(f"Trusted link: {link}")
+                            logger.info(f"Trusted link: {link}")
 
                     if len(results) >= max_results:
                         return results
 
             except Exception as e:
-                print(f"[Google API error page {i+1}]: {e}")
-                break
+                logger.exception(f"[Google API error page {i+1}]: {e}")
+                raise GoogleSearchApiError(f"Google Search API failed: {e}")
 
         return results
 
