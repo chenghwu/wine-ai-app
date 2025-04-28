@@ -74,16 +74,11 @@ async def list_all_wines(session: AsyncSession = Depends(get_async_session)):
     results = await get_all_wine_summaries(session)
     return [wine.to_dict() for wine in results]
 
-# To chek DB connectivity
-@router.get("/db-test", summary="Check DB connectivity")
-async def db_test(session: AsyncSession = Depends(get_async_session)):
+@router.api_route("/healthcheck", methods=["GET", "HEAD"], summary="Healthcheck endpoint")
+async def healthcheck(session: AsyncSession = Depends(get_async_session)):
     try:
-        result = await session.execute(text("SELECT 1"))
-        return {"db_working": True}
-    except Exception as e:
-        print("DB connection error:", e)
-        return {"db_working": False}
-
-@router.api_route("/api/healthcheck", methods=["GET", "HEAD"])
-async def healthcheck():
-    return {"status": "healthy"}
+        # lightweight DB check
+        await session.execute("SELECT 1")
+        return {"status": "healthy"}
+    except Exception:
+        return {"status": "unhealthy"}, 500
