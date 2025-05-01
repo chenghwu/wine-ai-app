@@ -2,8 +2,9 @@ export interface SATResult {
     score: number
     quality: string
     criteria: string[]
-    clusters: string[]
-    descriptors: string[]
+    aroma: Record<string, string[]>
+    clusters?: string[]     // optional for now
+    descriptors?: string[]  // optional for now
   }
 
 export type WineAnalysisResponse =

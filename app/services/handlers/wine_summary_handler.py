@@ -30,6 +30,8 @@ async def handle_wine_analysis_query(request):
     wine_name = ""
     if wine.casefold() in winery.casefold():
         wine_name = f"{winery} {vintage}"
+    elif winery.casefold() in wine.casefold():
+        wine_name = f"{wine} {vintage}"
     else:
         wine_name = f"{winery} {wine} {vintage}"
 
@@ -96,9 +98,13 @@ async def handle_fresh_summary(session, wine_name, query, request):
 
     # Save to DB
     logger.info(f"Saving to DB: '{wine_name}'")
+
+    summary_cleaned = summary.copy()   # Before changing schema, don't save aroma column to DB since it's in sat 
+    summary_cleaned.pop("aroma", None)
+
     try:
         await save_wine_summary(session, {
-            **summary,
+            **summary_cleaned,
             "query_text": query
         })
     except Exception as e:
@@ -108,6 +114,6 @@ async def handle_fresh_summary(session, wine_name, query, request):
     return {
         "status": "analyzed",
         "input": request.input,
-        "output": MCPOutput(**summary),
-        "context": request.context.model_dump()  # Ensure dict for JSON serialization
+        "output": MCPOutput(**summary_cleaned),
+        "context": request.context.model_dump() # Ensure dict for JSON serialization
     }

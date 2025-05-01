@@ -4,6 +4,7 @@ import os
 import time
 from dotenv import load_dotenv
 from app.exceptions import GeminiApiError
+from app.utils.aroma_lexicon import aroma_lexicon
 from app.utils.cache import get_cache_or_fetch
 from app.utils.env import setup_gemini_env
 from app.utils.llm_parsing import parse_json_from_text
@@ -43,7 +44,7 @@ def summarize_with_gemini(wine_name: str, content: str, sources: list[str]) -> d
     """
     Use Gemini to summarize wine info using SAT-style prompt and parse JSON output.
     """
-    prompt = get_sat_prompt(wine_name, content, sources)
+    prompt = get_sat_prompt(wine_name, content, sources, aroma_lexicon)
     try:
         raw_text = call_gemini_sync_with_retry(prompt, temperature=0.7)
         logger.info(f"Gemini raw output:\n{raw_text}")

@@ -1,4 +1,10 @@
-def get_sat_prompt(wine_name: str, content: str, sources: list[str]) -> str:
+def get_sat_prompt(
+  wine_name: str,
+  content: str,
+  sources: list[str],
+  aroma_lexicon: dict
+) -> str:
+    cluster_list_str = ", ".join(aroma_lexicon.keys())
     sources_section = ""
     if sources:
         formatted_sources = "\n".join(f"- {s}" for s in sources)
@@ -12,6 +18,11 @@ based on typical regional and varietal characteristics, even if the provided tex
 Be concise and decisive — NEVER include phrases like "I cannot ascertain...", "I expect..." or "based on limited info".
 Instead, **make the best educated expert assumption** using your knowledge and the content below.
 
+After completing the SAT analysis, also generate a machine-readable "aroma" field.
+This field maps aroma descriptors from the nose, palate, or analysis sections to their corresponding cluster.
+Only include clusters with clearly identifiable descriptors.
+Omit any clusters not found in the content.
+
 --------------------------
 Content to analyze:
 {content}
@@ -21,10 +32,20 @@ Content to analyze:
 Your response **must follow this exact JSON format**, using key SAT descriptors and technical language.
 DO NOT skip any field.
 Each field MUST contain the required sub-elements as described.
+The "aroma" field **must** be a JSON object mapping clusters to a list of matching aroma terms, like this:
+
+{{
+  "Floral": ["elderflower", "honeysuckle"],
+  "Green fruit": ["apple", "pear"],
+  "Yeast": ["biscuit"]
+}}
+
+Use this exact list of 20 "aroma" cluster keys (case-sensitive):
+{cluster_list_str}
 
 {{
   "wine": "{wine_name}",
-  "grape_varieties": "Grape varieties composition of the wine (e.g. 85% Cabernet Sauvignon, 15% Merlot)"
+  "grape_varieties": "Grape varieties composition of the wine (e.g. 85% Cabernet Sauvignon, 15% Merlot)",
   "appearance": "clarity, intensity, color (e.g., clear, medium intensity, ruby)",
   "nose": "cleanliness, intensity, list of aroma characteristics (e.g., clean, pronounced, red cherry, blackcurrant, cedar, leather)",
   "palate": "sweetness, acidity, tannin, alcohol, body, flavor intensity, flavor characteristics, finish, balanced or not (e.g., dry, high acidity, medium+ tannin, full body, pronounced intensity, flavors of blackberry, vanilla, mushroom, long finish, balanced)",
@@ -32,6 +53,11 @@ Each field MUST contain the required sub-elements as described.
   "quality": "Choose one: Poor, Acceptable, Good, Very Good, Outstanding",
   "average_price": "Estimated average market price in U.S. dollars (e.g. US$120)",
   "analysis": "Brief summary of why you came to these conclusions using SAT criteria",
+  "aroma": {{
+    "Floral": ["elderflower", "honeysuckle"],
+    "Green fruit": ["apple", "pear"],
+    "Yeast": ["biscuit"]
+  }},
   "reference_source": ["A list of sources and links you used from the content"]
 }}
 

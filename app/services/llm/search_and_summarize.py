@@ -7,6 +7,7 @@ from app.exceptions import WineAppError, GoogleSearchApiError, GeminiApiError
 from app.services.llm.gemini_engine import summarize_with_gemini
 from app.utils.cache import get_cache_or_fetch_async
 from app.utils.search import google_search_links_with_retry
+from app.utils.url_utils import is_valid_url
 from app.db.session import get_async_session
 from app.db.crud.wine_summary import get_wine_summary_by_name, save_wine_summary
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -100,6 +101,9 @@ async def summarize_wine_info(wine_name: str) -> dict:
         if isinstance(existing_sources, str):
             existing_sources = [existing_sources]
             
+        # Only keep valid urls
+        existing_sources = [s for s in existing_sources if is_valid_url(s)]
+        
         # Combine with Google search links
         summary["reference_source"] = list(set(search_links + existing_sources))
         timings["final_merge"] = time.perf_counter() - t3
