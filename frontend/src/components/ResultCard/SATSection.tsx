@@ -11,7 +11,6 @@ interface SATSectionProps {
 }
 
 export function SATSection({ sat }: SATSectionProps) {
-  const aroma = sat.aroma || {}
   return (
     <section className="mt-4 border-t border-zinc-700 pt-4 w-full">
       <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-3">
@@ -30,9 +29,7 @@ export function SATSection({ sat }: SATSectionProps) {
         */}
 
         {/* Quality Bar */}
-        <div className="flex items-center gap-1">
-          <QualityBarInline quality={sat.quality} />
-        </div>
+        <QualityBarInline quality={sat.quality} />
 
         {/* Aroma Map */}
         <AromaDisplay aroma={sat.aroma} />
