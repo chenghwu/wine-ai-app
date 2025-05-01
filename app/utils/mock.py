@@ -19,8 +19,11 @@ def generate_mock_summary() -> MCPOutput:
             "score": 3,
             "quality": "Very Good",
             "criteria": ["Balance", "Length", "Complexity"],
-            "clusters": ["black fruit", "spice"],
-            "descriptors": ["cassis", "tobacco", "mocha"]
+            "aroma": {
+                "Floral": ["elderflower", "honeysuckle"],
+                "Red fruit": ["raspberry", "red cherry"],
+                "Oak": ["vanilla"]
+            },
         },
         "reference_source": ["Mock: winespectator.com"]
     }

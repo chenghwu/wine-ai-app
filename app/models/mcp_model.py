@@ -11,6 +11,14 @@ class MCPContext(BaseModel):
     ruleset: Optional[str] = None                    # Name of the logic applied (e.g., "WSET Level 3 SAT Rules")
     use_mock: Optional[bool] = False
 
+class SATResult(BaseModel):
+    score: int
+    quality: str
+    criteria: List[str]
+    aroma: Dict[str, List[str]]
+    clusters: Optional[List[str]] = None
+    descriptors: Optional[List[str]] = None
+
 class MCPOutput(BaseModel):
     wine: str
     grape_varieties: str
@@ -21,7 +29,7 @@ class MCPOutput(BaseModel):
     #quality: str
     average_price: str
     analysis: str
-    sat: Dict[str, Any]
+    sat: SATResult
     reference_source: List[str]
 
 # Define the main request schema used in your FastAPI endpoint /analyze
