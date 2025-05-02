@@ -5,7 +5,6 @@ import time
 from dotenv import load_dotenv
 from app.exceptions import GeminiApiError
 from app.utils.aroma_lexicon import aroma_lexicon
-from app.utils.cache import get_cache_or_fetch
 from app.utils.env import setup_gemini_env
 from app.utils.llm_parsing import parse_json_from_text
 from app.prompts.wine_prompts import get_sat_prompt, get_wine_from_query_prompt
