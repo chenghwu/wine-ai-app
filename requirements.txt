@@ -17,4 +17,3 @@ alembic
 greenlet
 langdetect
 sentence-transformers
-hf_xet
