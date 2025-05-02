@@ -9,7 +9,7 @@ DEBUG_LOG = ENV == "dev"
 ACCEPTED_LANGUAGES = {"en", "fr", "it", "es"}
 
 # SentenceTransformer model to use
-EMBEDDING_MODEL_NAME = "paraphrase-MiniLM-L6-v2"
+EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 
 # Thresholds
 REFERENCE_SIM_THRESHOLD = 0.35  # used in is_semantically_wine_related
