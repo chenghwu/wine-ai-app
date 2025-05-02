@@ -17,4 +17,4 @@ alembic
 greenlet
 langdetect
 sentence-transformers
-huggingface_hub[hf_xet]
+hf_xet
