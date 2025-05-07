@@ -1,5 +1,5 @@
 import pytest
-from app.db.database import get_async_session
+from app.db.session import get_async_session
 
 @pytest.mark.asyncio
 async def test_db_session_basic():

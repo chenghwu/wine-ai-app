@@ -13,12 +13,12 @@ services:
       - postgres_data:/var/lib/postgresql/data    # Persistent volume for data
 
   wine-ai-app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: wine-api
     ports:
-      - "8000:8000"   # Map host:container port
-    volumes:
-      - .:/app        # Mount the app code into the container
+      - "8080:8080"   # Map host:container port
     environment:
       ENV: "dev"
       USE_MOCK: "true"
@@ -29,6 +29,9 @@ services:
       DATABASE_URL: "${DATABASE_URL}"
     depends_on:
       - postgres      # Ensure DB is ready before app starts
+    volumes:
+      - .:/app        # Mount the app code into the container
+      - ~/.cache:/root/.cache  # Avoid re-downloading models
 
 volumes:
   postgres_data:
