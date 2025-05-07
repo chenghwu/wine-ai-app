@@ -1,27 +1,39 @@
-FROM python:3.11-slim
+# ---------- Stage 1: Builder ----------
+FROM python:3.11-slim AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy project files
-COPY . /app
-
-# Install OS dependencies
+# System dependencies
 RUN apt-get update && apt-get install -y \
     build-essential git \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Copy requirements and install into /install directory
+COPY requirements.txt .
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir --target=/install -r requirements.txt
 
-# Optional: preload model (skip for smaller image)
+# Set PYTHONPATH so the next command can find packages in /install
+ENV PYTHONPATH=/install
+
+# Preload SentenceTransformer model into /root/.cache
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
+# ---------- Stage 2: Final ----------
+FROM python:3.11-slim AS final
 
-# Expose FastAPI port
+WORKDIR /app
+
+# Copy your application source code
+COPY . /app
+
+# Copy dependencies from builder stage
+COPY --from=builder /install /usr/local/lib/python3.11/site-packages/
+
+# Copy preloaded model cache from builder
+COPY --from=builder /root/.cache /root/.cache
+
+# Expose FastAPI port and run the server
 ENV PORT=8080
 EXPOSE 8080
-
-# Run the app
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
