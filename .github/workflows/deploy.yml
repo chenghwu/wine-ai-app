@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set environment based on branch
         run: |
@@ -39,7 +39,6 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
-          service_account_key_file: ${{ github.workspace }}/gcloud-credentials.json
 
       - name: Debug Authentication
         run: |
