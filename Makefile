@@ -3,6 +3,14 @@ VENV_DIR := venv
 PYTHON := $(VENV_DIR)/bin/python
 PIP := $(VENV_DIR)/bin/pip
 
+# Set project metadata variables
+PROJECT_ID = gen-lang-client-0149363960
+REGION = us-west1
+REPO = wine-ai-app
+IMAGE_NAME = wine-api
+TAG = latest
+FULL_IMAGE = $(REGION)-docker.pkg.dev/$(PROJECT_ID)/$(REPO)/$(IMAGE_NAME)
+
 # Default goal
 .DEFAULT_GOAL := help
 
@@ -14,7 +22,7 @@ $(VENV_DIR)/bin/activate: requirements.txt
 install: $(VENV_DIR)/bin/activate
 	@echo "Installing dependencies..."
 	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements.txt
+	$(PIP) install -r requirements-dev.txt
 
 run:
 	@echo "Starting FastAPI app..."
@@ -48,10 +56,25 @@ docker-build:
 
 docker-run:
 	@echo "Running Wine AI App in Docker..."
-	docker run -p 8000:8000 --env-file .env wine-ai-app
+	docker run -d -p 8080:8080 --env-file .env wine-ai-app
 
 docker-compose-up:
 	docker-compose up --build -d
+
+# Build image for Google Cloud Run (linux/amd64)
+docker-build-cloudrun:
+	docker build --platform=linux/amd64 -t $(FULL_IMAGE):$(TAG) .
+
+# Push image to Artifact Registry
+docker-push-cloudrun:
+	docker push $(FULL_IMAGE):$(TAG)
+
+# Build & Push (combined)
+docker-deploy-cloudrun: docker-build-cloudrun docker-push-cloudrun
+
+# Google cloud build
+gcloud-build:
+	gcloud builds submit --tag $(FULL_IMAGE)
 
 docker-start:
 	@echo "Starting all Docker services without rebuilding..."

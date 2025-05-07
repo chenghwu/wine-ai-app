@@ -109,7 +109,7 @@ make init-db
 make run
 ```
 
-Then visit [http://localhost:8000/swagger](http://localhost:8000/swagger) for Swagger UI.
+Then visit [http://localhost:8080/swagger](http://localhost:8080/swagger) for Swagger UI.
 
 ### Frontend (Next.js UI)
 
@@ -117,7 +117,7 @@ In a new terminal
 
 1. At fronend directory, create `.env.local`
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
 NEXT_PUBLIC_SHOW_MOCK_TOGGLE=true
 ```
 

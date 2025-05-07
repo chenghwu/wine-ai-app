@@ -76,5 +76,6 @@ async def healthcheck(
         # Deep healthcheck (include DB check)
         await session.execute(text("SELECT 1"))
         return {"status": "healthy", "database": "connected"}
-    except Exception:
+    except Exception as e:
+        logger.exception("Deep DB healthcheck failed.")
         return {"status": "unhealthy", "database": "unreachable", "error": str(e)}
