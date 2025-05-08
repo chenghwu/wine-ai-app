@@ -56,7 +56,7 @@ docker-build:
 
 docker-run:
 	@echo "Running Wine AI App in Docker..."
-	docker run -d -p 8080:8080 --env-file .env wine-api:slim
+	docker run -d -p 8080:8080 --env-file .env wine-ai-app
 
 docker-compose-up:
 	docker-compose up --build -d
