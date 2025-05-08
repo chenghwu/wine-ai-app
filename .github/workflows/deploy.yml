@@ -56,19 +56,27 @@ jobs:
       - name: Build and push image with Cloud Build
         run: |
           echo "Submitting Cloud Build without log streaming..."
-          BUILD_ID=$(gcloud builds submit \
+          BUILD_NAME=$(gcloud builds submit \
             --tag ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
-            --format='value(metadata.build.id)')
+            --async \
+            --format='value(name)')
+
+          # Extract just the build ID from the full name
+          BUILD_ID="${BUILD_NAME##*/}"
 
           echo "Submitted Build ID: $BUILD_ID"
           echo "Checking build status..."
 
           # Wait for the build to finish and check status
           STATUS=""
-          until [[ "$STATUS" == "SUCCESS" || "$STATUS" == "FAILURE" || "$STATUS" == "CANCELLED" ]]; do
+          ATTEMPTS=0
+          MAX_ATTEMPTS=30  # 30 attempts x 60s = 30 minutes
+
+          until [[ "$STATUS" == "SUCCESS" || "$STATUS" == "FAILURE" || "$STATUS" == "CANCELLED" || "$STATUS" == "TIMEOUT" || "$ATTEMPTS" -ge "$MAX_ATTEMPTS" ]]; do
             STATUS=$(gcloud builds describe "$BUILD_ID" --format='value(status)')
-            echo "Current status: $STATUS"
-            sleep 300
+            echo "[$(date)] Build status: $STATUS (attempt $((ATTEMPTS+1))/$MAX_ATTEMPTS)"
+            ATTEMPTS=$((ATTEMPTS+1))
+            sleep 60
           done
 
           if [[ "$STATUS" != "SUCCESS" ]]; then
