@@ -1,8 +1,6 @@
 # Python cache
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
 
 # Test cache & coverage
 .pytest_cache/
@@ -14,22 +12,24 @@ build/
 dist/
 
 # Env & secrets
+venv/
 .venv/
 .env
 .env.*
-cache/
+/cache/
 
-# Logs and temp
+# Logs, archives, and DBs
 *.log
 *.zip
 *.tar
 *.gz
+*.sqlite3
+*.db
 
 # Editor & IDE
 .idea/
 .vscode/
 .DS_Store
-.mypy_cache/
 
 # Git
 .git/

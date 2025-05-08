@@ -10,8 +10,10 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements and install into /install directory
 COPY requirements.txt .
+
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir --target=/install -r requirements.txt
+    pip install --no-cache-dir --target=/install -r requirements.txt && \
+    rm -rf /root/.cache/pip /tmp/*
 
 # Set PYTHONPATH so the next command can find packages in /install
 ENV PYTHONPATH=/install
@@ -32,6 +34,8 @@ COPY --from=builder /install /usr/local/lib/python3.11/site-packages/
 
 # Copy preloaded model cache from builder
 COPY --from=builder /root/.cache /root/.cache
+
+ENV PYTHONPATH=/usr/local/lib/python3.11/site-packages/
 
 # Expose FastAPI port and run the server
 ENV PORT=8080

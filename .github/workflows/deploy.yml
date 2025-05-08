@@ -56,38 +56,38 @@ jobs:
       - name: Convert .env to YAML for Cloud Run
         run: python3 scripts/convert_env_to_yaml.py .env env.yaml
 
-      # - name: Build and push image with Cloud Build
-      #   run: |
-      #     echo "Submitting Cloud Build without log streaming..."
-      #     BUILD_NAME=$(gcloud builds submit \
-      #       --tag ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
-      #       --async \
-      #       --format='value(name)')
+      - name: Build and push image with Cloud Build
+        run: |
+          echo "Submitting Cloud Build without log streaming..."
+          BUILD_NAME=$(gcloud builds submit \
+            --tag ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
+            --async \
+            --format='value(name)')
 
-      #     # Extract just the build ID from the full name
-      #     BUILD_ID="${BUILD_NAME##*/}"
+          # Extract just the build ID from the full name
+          BUILD_ID="${BUILD_NAME##*/}"
 
-      #     echo "Submitted Build ID: $BUILD_ID"
-      #     echo "Checking build status..."
+          echo "Submitted Build ID: $BUILD_ID"
+          echo "Checking build status..."
 
-      #     # Wait for the build to finish and check status
-      #     STATUS=""
-      #     ATTEMPTS=0
-      #     MAX_ATTEMPTS=30  # 30 attempts x 60s = 30 minutes
+          # Wait for the build to finish and check status
+          STATUS=""
+          ATTEMPTS=0
+          MAX_ATTEMPTS=30  # 30 attempts x 60s = 30 minutes
 
-      #     until [[ "$STATUS" == "SUCCESS" || "$STATUS" == "FAILURE" || "$STATUS" == "CANCELLED" || "$STATUS" == "TIMEOUT" || "$ATTEMPTS" -ge "$MAX_ATTEMPTS" ]]; do
-      #       STATUS=$(gcloud builds describe "$BUILD_ID" --format='value(status)')
-      #       echo "[$(date)] Build status: $STATUS (attempt $((ATTEMPTS+1))/$MAX_ATTEMPTS)"
-      #       ATTEMPTS=$((ATTEMPTS+1))
-      #       sleep 60
-      #     done
+          until [[ "$STATUS" == "SUCCESS" || "$STATUS" == "FAILURE" || "$STATUS" == "CANCELLED" || "$STATUS" == "TIMEOUT" || "$ATTEMPTS" -ge "$MAX_ATTEMPTS" ]]; do
+            STATUS=$(gcloud builds describe "$BUILD_ID" --format='value(status)')
+            echo "[$(date)] Build status: $STATUS (attempt $((ATTEMPTS+1))/$MAX_ATTEMPTS)"
+            ATTEMPTS=$((ATTEMPTS+1))
+            sleep 60
+          done
 
-      #     if [[ "$STATUS" != "SUCCESS" ]]; then
-      #       echo "::error ::Cloud Build failed with status: $STATUS"
-      #       exit 1
-      #     else
-      #       echo "Cloud Build completed successfully."
-      #     fi
+          if [[ "$STATUS" != "SUCCESS" ]]; then
+            echo "::error ::Cloud Build failed with status: $STATUS"
+            exit 1
+          else
+            echo "Cloud Build completed successfully."
+          fi
 
       - name: Deploy to Cloud Run
         run: |
