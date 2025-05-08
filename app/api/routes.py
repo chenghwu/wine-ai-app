@@ -79,3 +79,24 @@ async def healthcheck(
     except Exception as e:
         logger.exception("Deep DB healthcheck failed.")
         return {"status": "unhealthy", "database": "unreachable", "error": str(e)}
+
+@router.get("/debug/env", summary="Show selected environment variables (dev only)")
+async def debug_env():
+    import os
+
+    # List only safe-to-log keys for debugging
+    keys_to_check = [
+        "ENV",
+        "ALLOWED_ORIGINS",
+        "DB_HOST",
+        "DB_NAME",
+        "DB_USER",
+        "DB_PASSWORD",
+        "GOOGLE_API_KEY",
+        "GEMINI_API_KEY"
+    ]
+
+    return {
+        key: os.getenv(key, "[NOT SET]")
+        for key in keys_to_check
+    }
