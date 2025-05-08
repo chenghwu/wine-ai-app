@@ -58,15 +58,18 @@ jobs:
           echo "Submitting Cloud Build without log streaming..."
           BUILD_ID=$(gcloud builds submit \
             --tag ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
-            --format='value(metadata.build.id)' \
-            --no-stream \
-            --logging=CLOUD_LOGGING_ONLY)
+            --format='value(metadata.build.id)')
 
           echo "Submitted Build ID: $BUILD_ID"
           echo "Checking build status..."
 
           # Wait for the build to finish and check status
-          STATUS=$(gcloud builds describe "$BUILD_ID" --format='value(status)')
+          STATUS=""
+          until [[ "$STATUS" == "SUCCESS" || "$STATUS" == "FAILURE" || "$STATUS" == "CANCELLED" ]]; do
+            STATUS=$(gcloud builds describe "$BUILD_ID" --format='value(status)')
+            echo "Current status: $STATUS"
+            sleep 300
+          done
 
           if [[ "$STATUS" != "SUCCESS" ]]; then
             echo "::error ::Cloud Build failed with status: $STATUS"
