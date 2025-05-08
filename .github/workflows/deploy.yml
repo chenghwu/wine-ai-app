@@ -55,8 +55,25 @@ jobs:
 
       - name: Build and push image with Cloud Build
         run: |
-          gcloud builds submit \
-            --tag ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
+          echo "Submitting Cloud Build without log streaming..."
+          BUILD_ID=$(gcloud builds submit \
+            --tag ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
+            --format='value(metadata.build.id)' \
+            --no-stream \
+            --logging=CLOUD_LOGGING_ONLY)
+
+          echo "Submitted Build ID: $BUILD_ID"
+          echo "Checking build status..."
+
+          # Wait for the build to finish and check status
+          STATUS=$(gcloud builds describe "$BUILD_ID" --format='value(status)')
+
+          if [[ "$STATUS" != "SUCCESS" ]]; then
+            echo "::error ::Cloud Build failed with status: $STATUS"
+            exit 1
+          else
+            echo "Cloud Build completed successfully."
+          fi
 
       - name: Deploy to Cloud Run
         run: |
