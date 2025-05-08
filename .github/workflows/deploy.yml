@@ -53,6 +53,9 @@ jobs:
             echo "${{ secrets.TEST_ENV_FILE }}" > .env
           fi
 
+      - name: Convert .env to YAML for Cloud Run
+        run: python3 scripts/convert_env_to_yaml.py .env env.yaml
+
       # - name: Build and push image with Cloud Build
       #   run: |
       #     echo "Submitting Cloud Build without log streaming..."
@@ -94,6 +97,6 @@ jobs:
             --platform=managed \
             --allow-unauthenticated \
             --project=${{ secrets.GOOGLE_PROJECT_ID }} \
-            --env-vars-file .env \
+            --env-vars-file=env.yaml \
             --cpu=1 \
             --memory=1Gi
