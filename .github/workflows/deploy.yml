@@ -1,4 +1,4 @@
-name: Deploy to Cloud Run (Prod & Test)
+name: Deploy to Cloud Run (Prod & Dev)
 
 on:
   push:
@@ -24,8 +24,8 @@ jobs:
             echo "SERVICE_NAME=wine-api" >> $GITHUB_ENV
             echo "IMAGE_TAG=latest" >> $GITHUB_ENV
           else
-            echo "SERVICE_NAME=wine-api-test" >> $GITHUB_ENV
-            echo "IMAGE_TAG=test" >> $GITHUB_ENV
+            echo "SERVICE_NAME=wine-api-dev" >> $GITHUB_ENV
+            echo "IMAGE_TAG=dev" >> $GITHUB_ENV
           fi
 
       - name: Print GitHub OIDC Token Audience
@@ -50,7 +50,7 @@ jobs:
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "${{ secrets.PROD_ENV_FILE }}" > .env
           else
-            echo "${{ secrets.TEST_ENV_FILE }}" > .env
+            echo "${{ secrets.DEV_ENV_FILE }}" > .env
           fi
 
       - name: Convert .env to YAML for Cloud Run
