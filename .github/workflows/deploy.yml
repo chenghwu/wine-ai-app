@@ -45,10 +45,13 @@ jobs:
         with:
           project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
 
-      - name: Debug Authentication
+      - name: Write .env file based on branch
         run: |
-          gcloud auth list
-          gcloud config list
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "${{ secrets.PROD_ENV_FILE }}" > .env
+          else
+            echo "${{ secrets.TEST_ENV_FILE }}" > .env
+          fi
 
       - name: Build and push image with Cloud Build
         run: |
@@ -63,3 +66,6 @@ jobs:
             --platform=managed \
             --allow-unauthenticated \
             --project=${{ secrets.GOOGLE_PROJECT_ID }}
+            --env-vars-file .env \
+            --cpu=1 \
+            --memory=1Gi
