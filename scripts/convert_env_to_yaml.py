@@ -1,14 +1,13 @@
-import os
+import sys
+from pathlib import Path
 
-def parse_env_file(input_path, output_path):
-    with open(input_path, 'r') as infile, open(output_path, 'w') as outfile:
-        for line in infile:
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            if '=' in line:
-                key, value = line.split('=', 1)
-                outfile.write(f'{key.strip()}: "{value.strip()}"\n')
+env_path = Path(sys.argv[1])
+yaml_path = Path(sys.argv[2])
 
-# Example usage
-parse_env_file('.env', '.env.yaml')
+with env_path.open() as f:
+    lines = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+
+with yaml_path.open("w") as f:
+    for line in lines:
+        key, value = line.split("=", 1)
+        f.write(f'{key}: "{value}"\n')
