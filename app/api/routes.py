@@ -19,9 +19,9 @@ async def chat_search_wine(request: MCPRequest, session: AsyncSession = Depends(
     env = os.getenv("ENV", "prod")
     use_mock = request.context.model_dump().get("use_mock", False)
     
-    # Mock logic (only in dev mode)
+    # Mock logic (only in local dev mode)
     if env == "dev" and use_mock:
-        logger.info("Using mock response in dev mode.")
+        logger.info("Using mock response in local dev mode.")
         return await handle_mock_response(request)
 
     # Parse user query into structured wine info
@@ -79,3 +79,12 @@ async def healthcheck(
     except Exception as e:
         logger.exception("Deep DB healthcheck failed.")
         return {"status": "unhealthy", "database": "unreachable", "error": str(e)}
+
+@router.get("/meta", summary="App metadata")
+async def get_metadata():
+    from app.version import APP_VERSION, LAST_UPDATED
+
+    return {
+        "version": APP_VERSION,
+        "last_updated": LAST_UPDATED,
+    }
