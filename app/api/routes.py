@@ -19,9 +19,9 @@ async def chat_search_wine(request: MCPRequest, session: AsyncSession = Depends(
     env = os.getenv("ENV", "prod")
     use_mock = request.context.model_dump().get("use_mock", False)
     
-    # Mock logic (only in dev mode)
+    # Mock logic (only in local dev mode)
     if env == "dev" and use_mock:
-        logger.info("Using mock response in dev mode.")
+        logger.info("Using mock response in local dev mode.")
         return await handle_mock_response(request)
 
     # Parse user query into structured wine info
@@ -80,23 +80,11 @@ async def healthcheck(
         logger.exception("Deep DB healthcheck failed.")
         return {"status": "unhealthy", "database": "unreachable", "error": str(e)}
 
-@router.get("/debug/env", summary="Show selected environment variables (dev only)")
-async def debug_env():
-    import os
-
-    # List only safe-to-log keys for debugging
-    keys_to_check = [
-        "ENV",
-        "ALLOWED_ORIGINS",
-        "DB_HOST",
-        "DB_NAME",
-        "DB_USER",
-        "DB_PASSWORD",
-        "GOOGLE_API_KEY",
-        "GEMINI_API_KEY"
-    ]
+@router.get("/meta", summary="App metadata")
+async def get_metadata():
+    from app.version import APP_VERSION, LAST_UPDATED
 
     return {
-        key: os.getenv(key, "[NOT SET]")
-        for key in keys_to_check
+        "version": APP_VERSION,
+        "last_updated": LAST_UPDATED,
     }

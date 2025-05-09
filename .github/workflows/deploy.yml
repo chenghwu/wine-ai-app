@@ -28,17 +28,13 @@ jobs:
             echo "IMAGE_TAG=dev" >> $GITHUB_ENV
           fi
 
-      - name: Print GitHub OIDC Token Audience
-        run: |
-          echo "AUDIENCE: https://github.com/${{ github.repository }}"
-
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
         with:
           token_format: access_token
           workload_identity_provider: "projects/165453885473/locations/global/workloadIdentityPools/github-pool/providers/github-oidc-provider"
           service_account: ${{ secrets.SERVICE_ACCOUNT_EMAIL }}
-          audience: "https://github.com/chenghwu/wine-ai-app"
+          audience: "https://github.com/${{ github.repository }}"
 
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
@@ -53,6 +49,10 @@ jobs:
             echo "${{ secrets.DEV_ENV_FILE }}" > .env
           fi
 
+      - name: Append LAST_UPDATED to .env
+        run: |
+          echo "LAST_UPDATED=$(git log -1 --date=format:'%B %-d, %Y' --pretty=format:'%cd')" >> .env
+
       - name: Convert .env to YAML for Cloud Run
         run: python3 scripts/convert_env_to_yaml.py .env env.yaml
 
@@ -66,27 +66,36 @@ jobs:
 
           # Extract just the build ID from the full name
           BUILD_ID="${BUILD_NAME##*/}"
-
           echo "Submitted Build ID: $BUILD_ID"
-          echo "Checking build status..."
 
           # Wait for the build to finish and check status
+          echo "Checking build status..."
           STATUS=""
           ATTEMPTS=0
           MAX_ATTEMPTS=30  # 30 attempts x 60s = 30 minutes
 
-          until [[ "$STATUS" == "SUCCESS" || "$STATUS" == "FAILURE" || "$STATUS" == "CANCELLED" || "$STATUS" == "TIMEOUT" || "$ATTEMPTS" -ge "$MAX_ATTEMPTS" ]]; do
+          while (( ATTEMPTS < MAX_ATTEMPTS )); do
             STATUS=$(gcloud builds describe "$BUILD_ID" --format='value(status)')
             echo "[$(date)] Build status: $STATUS (attempt $((ATTEMPTS+1))/$MAX_ATTEMPTS)"
+
+            case "$STATUS" in
+              SUCCESS)
+                echo "Cloud Build completed successfully."
+                break
+                ;;
+              FAILURE | CANCELLED | TIMEOUT)
+                echo "::error :: Cloud Build failed with status: $STATUS"
+                exit 1
+                ;;
+            esac
+
             ATTEMPTS=$((ATTEMPTS+1))
             sleep 60
           done
 
           if [[ "$STATUS" != "SUCCESS" ]]; then
-            echo "::error ::Cloud Build failed with status: $STATUS"
+            echo "::error :: Timed out waiting for Cloud Build to complete after $MAX_ATTEMPTS minutes."
             exit 1
-          else
-            echo "Cloud Build completed successfully."
           fi
 
       - name: Deploy to Cloud Run

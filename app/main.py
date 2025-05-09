@@ -34,7 +34,13 @@ app.add_middleware(
     allow_headers=["*"]     # allow all headers
 )
 
+# Routes
 app.include_router(api_router, prefix="/api")
+
+# Conditionally include debug routes for dev mode
+if os.getenv("ENV") == "dev":
+    from app.api.debug_routes import router as debug_router
+    app.include_router(debug_router, prefix="/debug")
 
 # Health check or demo route
 @app.get("/")
