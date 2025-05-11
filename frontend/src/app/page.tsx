@@ -63,10 +63,17 @@ export default function WineChatPage() {
         })
       })
       const data = await res.json()
-      setResponse({
+      const result: WineAnalysisResponse = {
         status: 'success',
-        ...data.output
-      })
+        ...data.output,
+      };
+      setResponse(result);
+  
+      // Clear query if successful
+      if (result.status === 'success') {
+        setQuery('');
+      }
+
     } catch (err) {
       console.error('Error calling API:', err)
       setResponse({
