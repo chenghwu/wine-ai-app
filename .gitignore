@@ -43,5 +43,8 @@ frontend/.env.production
 # Docker generated
 *.tar
 
+# Firebase generated
+.firebase/
+
 # macOS system files
 .DS_Store
