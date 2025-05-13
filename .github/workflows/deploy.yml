@@ -126,18 +126,11 @@ jobs:
         run: npm run build
         working-directory: frontend
 
-      - name: Deploy to Firebase Hosting (Production)
-        if: github.ref == 'refs/heads/main'
+      - name: Deploy to Firebase Hosting (Multi-Site)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: wine-intelligence
-
-      - name: Deploy to Firebase Hosting (Dev)
-        if: github.ref == 'refs/heads/dev'
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
-          projectId: wine-intelligence
+          target: ${{ github.ref == 'refs/heads/main' && 'production' || 'dev' }}
+          firebaseToolsVersion: "14.3.1"

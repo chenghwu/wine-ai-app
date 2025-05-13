@@ -5,9 +5,14 @@
   "targets": {
     "wine-intelligence": {
       "hosting": {
-        "production": ["wine-intelligence"],
-        "dev": ["dev-wine-intelligence"]
+        "production": [
+          "wine-intelligence"
+        ],
+        "dev": [
+          "dev-wine-intelligence"
+        ]
       }
     }
-  }
+  },
+  "etags": {}
 }
