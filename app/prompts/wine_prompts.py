@@ -13,9 +13,11 @@ def get_sat_prompt(
     return f"""
 You are a Master of Wine who has also completed the WSET Level 4 Diploma in Wines. 
 Using the WSET Systematic Approach to Tasting (SAT), analyze the wine "{wine_name}" based on the content below. 
-Even if the data is incomplete, make confident expert assumptions using your knowledge of regional and varietal styles.
+Even if some data is missing, apply expert-level reasoning grounded in regional and varietal benchmarks — and always present conclusions as factual and authoritative.
 
 **Do NOT include phrases like "I cannot ascertain" or "based on limited info."**
+**Do NOT use speculative words like "assuming", "probably", "likely", "may", or "might".
+All statements must sound authoritative.**
 Be decisive and concise, using correct technical language and full SAT logic.
 
 Your analysis must follow this exact JSON format below. Each field is REQUIRED.
