@@ -133,8 +133,6 @@ jobs:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: wine-intelligence
-          channelId: production
-          target: production
 
       - name: Deploy to Firebase Hosting (Dev)
         if: github.ref == 'refs/heads/dev'
@@ -143,5 +141,3 @@ jobs:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: wine-intelligence
-          channelId: dev
-          target: dev

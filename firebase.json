@@ -4,17 +4,13 @@
       "target": "production",
       "public": "frontend/out",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [
-        { "source": "**", "destination": "/index.html" }
-      ]
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
     },
     {
       "target": "dev",
       "public": "frontend/out",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [
-        { "source": "**", "destination": "/index.html" }
-      ]
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
     }
   ]
 }
