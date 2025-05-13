@@ -2,6 +2,12 @@
   "projects": {
     "default": "wine-intelligence"
   },
-  "targets": {},
-  "etags": {}
+  "targets": {
+    "wine-intelligence": {
+      "hosting": {
+        "dev": ["dev-wine-intelligence"],
+        "production": ["wine-intelligence"]
+      }
+    }
+  }
 }
