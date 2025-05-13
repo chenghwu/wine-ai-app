@@ -1,0 +1,38 @@
+{
+  "hosting": [
+    {
+      "target": "dev",
+      "public": "frontend/out",
+      "rewrites": [
+        {
+          "source": "/api/**",
+          "run": {
+            "serviceId": "wine-api-dev",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
+      "target": "production",
+      "public": "frontend/out",
+      "rewrites": [
+        {
+          "source": "/api/**",
+          "run": {
+            "serviceId": "wine-api",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ]
+}
