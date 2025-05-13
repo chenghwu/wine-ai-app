@@ -5,8 +5,8 @@
   "targets": {
     "wine-intelligence": {
       "hosting": {
-        "dev": ["dev-wine-intelligence"],
-        "production": ["wine-intelligence"]
+        "production": ["wine-intelligence"],
+        "dev": ["dev-wine-intelligence"]
       }
     }
   }
