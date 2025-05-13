@@ -126,22 +126,13 @@ jobs:
         run: npm run build
         working-directory: frontend
 
-      # Deploy to production if on main
-      - name: Deploy to Firebase Hosting (PROD)
-        if: github.ref_name == 'main'
+      # Deploy to production and dev
+      - name: Deploy to Firebase Hosting (Multi-site)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: wine-intelligence
-
-      # Deploy to stable preview if on dev
-      - name: Deploy to Firebase Hosting (DEV)
-        if: github.ref_name == 'dev'
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
-          projectId: wine-intelligence
-          channelId: dev
-          expires: 7d
+          target: ${{ github.ref_name == 'main' && 'production' || 'dev' }}
+        env:
+          FIREBASE_CLI_PREVIEWS: hostingchannels
