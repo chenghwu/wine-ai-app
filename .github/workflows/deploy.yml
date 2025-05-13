@@ -11,108 +11,108 @@ permissions:
   contents: read
 
 jobs:
-  # deploy:
-  #   runs-on: ubuntu-latest
+  deploy:
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Checkout source
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-  #     - name: Set environment based on branch
-  #       run: |
-  #         if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-  #           echo "SERVICE_NAME=wine-api" >> $GITHUB_ENV
-  #           echo "IMAGE_TAG=latest" >> $GITHUB_ENV
-  #         else
-  #           echo "SERVICE_NAME=wine-api-dev" >> $GITHUB_ENV
-  #           echo "IMAGE_TAG=dev" >> $GITHUB_ENV
-  #         fi
+      - name: Set environment based on branch
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "SERVICE_NAME=wine-api" >> $GITHUB_ENV
+            echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+          else
+            echo "SERVICE_NAME=wine-api-dev" >> $GITHUB_ENV
+            echo "IMAGE_TAG=dev" >> $GITHUB_ENV
+          fi
 
-  #     - name: Authenticate with Google Cloud
-  #       uses: google-github-actions/auth@v2
-  #       with:
-  #         token_format: access_token
-  #         workload_identity_provider: "projects/882889769634/locations/global/workloadIdentityPools/github-pool/providers/github-oidc-provider"
-  #         service_account: ${{ secrets.SERVICE_ACCOUNT_EMAIL }}
-  #         audience: "https://github.com/${{ github.repository }}"
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: "projects/882889769634/locations/global/workloadIdentityPools/github-pool/providers/github-oidc-provider"
+          service_account: ${{ secrets.SERVICE_ACCOUNT_EMAIL }}
+          audience: "https://github.com/${{ github.repository }}"
 
-  #     - name: Set up gcloud CLI
-  #       uses: google-github-actions/setup-gcloud@v1
-  #       with:
-  #         project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
 
-  #     - name: Write .env file based on branch
-  #       run: |
-  #         if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-  #           echo "${{ secrets.PROD_ENV_FILE }}" > .env
-  #         else
-  #           echo "${{ secrets.DEV_ENV_FILE }}" > .env
-  #         fi
+      - name: Write .env file based on branch
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "${{ secrets.PROD_ENV_FILE }}" > .env
+          else
+            echo "${{ secrets.DEV_ENV_FILE }}" > .env
+          fi
 
-  #     - name: Append LAST_UPDATED to .env
-  #       run: |
-  #         echo "LAST_UPDATED=$(git log -1 --date=format:'%B %-d, %Y' --pretty=format:'%cd')" >> .env
+      - name: Append LAST_UPDATED to .env
+        run: |
+          echo "LAST_UPDATED=$(git log -1 --date=format:'%B %-d, %Y' --pretty=format:'%cd')" >> .env
 
-  #     - name: Convert .env to YAML for Cloud Run
-  #       run: python3 scripts/convert_env_to_yaml.py .env env.yaml
+      - name: Convert .env to YAML for Cloud Run
+        run: python3 scripts/convert_env_to_yaml.py .env env.yaml
 
-  #     - name: Build and push image with Cloud Build
-  #       run: |
-  #         echo "Submitting Cloud Build without log streaming..."
-  #         BUILD_NAME=$(gcloud builds submit \
-  #           --tag us-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
-  #           --async \
-  #           --format='value(name)')
+      - name: Build and push image with Cloud Build
+        run: |
+          echo "Submitting Cloud Build without log streaming..."
+          BUILD_NAME=$(gcloud builds submit \
+            --tag us-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
+            --async \
+            --format='value(name)')
 
-  #         # Extract just the build ID from the full name
-  #         BUILD_ID="${BUILD_NAME##*/}"
-  #         echo "Submitted Build ID: $BUILD_ID"
+          # Extract just the build ID from the full name
+          BUILD_ID="${BUILD_NAME##*/}"
+          echo "Submitted Build ID: $BUILD_ID"
 
-  #         # Wait for the build to finish and check status
-  #         echo "Checking build status..."
-  #         STATUS=""
-  #         ATTEMPTS=0
-  #         MAX_ATTEMPTS=30  # 30 attempts x 60s = 30 minutes
+          # Wait for the build to finish and check status
+          echo "Checking build status..."
+          STATUS=""
+          ATTEMPTS=0
+          MAX_ATTEMPTS=30  # 30 attempts x 60s = 30 minutes
 
-  #         while (( ATTEMPTS < MAX_ATTEMPTS )); do
-  #           STATUS=$(gcloud builds describe "$BUILD_ID" --format='value(status)')
-  #           echo "[$(date)] Build status: $STATUS (attempt $((ATTEMPTS+1))/$MAX_ATTEMPTS)"
+          while (( ATTEMPTS < MAX_ATTEMPTS )); do
+            STATUS=$(gcloud builds describe "$BUILD_ID" --format='value(status)')
+            echo "[$(date)] Build status: $STATUS (attempt $((ATTEMPTS+1))/$MAX_ATTEMPTS)"
 
-  #           case "$STATUS" in
-  #             SUCCESS)
-  #               echo "Cloud Build completed successfully."
-  #               break
-  #               ;;
-  #             FAILURE | CANCELLED | TIMEOUT)
-  #               echo "::error :: Cloud Build failed with status: $STATUS"
-  #               exit 1
-  #               ;;
-  #           esac
+            case "$STATUS" in
+              SUCCESS)
+                echo "Cloud Build completed successfully."
+                break
+                ;;
+              FAILURE | CANCELLED | TIMEOUT)
+                echo "::error :: Cloud Build failed with status: $STATUS"
+                exit 1
+                ;;
+            esac
 
-  #           ATTEMPTS=$((ATTEMPTS+1))
-  #           sleep 60
-  #         done
+            ATTEMPTS=$((ATTEMPTS+1))
+            sleep 60
+          done
 
-  #         if [[ "$STATUS" != "SUCCESS" ]]; then
-  #           echo "::error :: Timed out waiting for Cloud Build to complete after $MAX_ATTEMPTS minutes."
-  #           exit 1
-  #         fi
+          if [[ "$STATUS" != "SUCCESS" ]]; then
+            echo "::error :: Timed out waiting for Cloud Build to complete after $MAX_ATTEMPTS minutes."
+            exit 1
+          fi
 
-  #     - name: Deploy to Cloud Run
-  #       run: |
-  #         gcloud run deploy ${{ env.SERVICE_NAME }} \
-  #           --image=us-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
-  #           --region=${{ secrets.REGION }} \
-  #           --platform=managed \
-  #           --allow-unauthenticated \
-  #           --project=${{ secrets.GOOGLE_PROJECT_ID }} \
-  #           --env-vars-file=env.yaml \
-  #           --cpu=1 \
-  #           --memory=1Gi
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image=us-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
+            --region=${{ secrets.REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --project=${{ secrets.GOOGLE_PROJECT_ID }} \
+            --env-vars-file=env.yaml \
+            --cpu=1 \
+            --memory=1Gi
 
   deploy_frontend:
     runs-on: ubuntu-latest
-    #needs: deploy
+    needs: deploy
 
     steps:
       - name: Checkout source
