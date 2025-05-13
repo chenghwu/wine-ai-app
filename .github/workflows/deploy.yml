@@ -60,7 +60,7 @@ jobs:
         run: |
           echo "Submitting Cloud Build without log streaming..."
           BUILD_NAME=$(gcloud builds submit \
-            --tag ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
+            --tag us-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
             --async \
             --format='value(name)')
 
@@ -101,7 +101,7 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image=${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
+            --image=us-docker.pkg.dev/${{ secrets.GOOGLE_PROJECT_ID }}/wine-ai-app/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }} \
             --region=${{ secrets.REGION }} \
             --platform=managed \
             --allow-unauthenticated \
