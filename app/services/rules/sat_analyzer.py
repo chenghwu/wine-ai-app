@@ -1,10 +1,11 @@
 from app.utils.aroma_lexicon import aroma_lexicon
+from app.utils.post_llm_process import clean_aroma_clusters
 
 def analyze_wine_profile(profile: dict) -> dict:
     appearance = profile.get("appearance", "").lower()
     nose = profile.get("nose", "").lower()
     palate = profile.get("palate", "").lower()
-    aroma = profile.get("aroma", {}) or {}
+    aroma = clean_aroma_clusters(profile.get("aroma", {}) or {})
 
     score = 0
     criteria = []

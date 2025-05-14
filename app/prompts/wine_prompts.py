@@ -17,16 +17,14 @@ Even with partial data, apply expert-level reasoning grounded in regional and va
 Always present conclusions as factual and authoritative.
 Be decisive and concise, using correct technical language and full SAT logic.
 
-Your analysis must follow this exact JSON format below. Each field is REQUIRED.
-
-- The "nose" and "palate" must include **intensity**
-- The "palate" must include: sweetness, acidity, alcohol, body, flavor intensity, flavor characteristics, finish length, and balance
-- Include the "tannin" field in "palate" **only if the wine is red or contains red grape varieties**
-- In the "aroma" object:
+**Important rules:**
+- "nose" and "palate" must include **intensity**
+- "palate" must include: sweetness, acidity, alcohol, body, flavor intensity, flavor characteristics, **finish length**, and **whether it is balance**
+- Only include "tannin" if the wine is red or contains red grape varieties
+- In "aroma":
   - Extract and map **every aroma descriptor** mentioned in the "nose", "palate", or "analysis" to their correct cluster from the list below
-  - Assign each descriptor to the **single most contextually appropriate aroma cluster** from the list below
-  - **Never include an aroma cluster unless it contains at least one descriptor**
-  - **Do NOT include empty arrays** (e.g., "Red fruit": [])
+  - Assign each descriptor to the **single most contextually appropriate aroma cluster**
+  - **Omit all aroma clusters that do not contain at least one descriptor**
 - **Do NOT** use speculative words (e.g., "probably", "might", "assuming")
 - **Do NOT** include disclaimers like "based on limited info" or "I cannot ascertain"
 
@@ -36,7 +34,7 @@ Content to analyze:
 {sources_section}
 --------------------------
 
-Respond using this strict JSON format:
+Your analysis must follow this exact JSON format below. Each field is REQUIRED.
 
 {{
   "wine": "{wine_name}",
