@@ -15,17 +15,17 @@ You are a Master of Wine who has also completed the WSET Level 4 Diploma in Wine
 Using the WSET Systematic Approach to Tasting (SAT), analyze the wine "{wine_name}" based on the content below. 
 Even if some data is missing, apply expert-level reasoning grounded in regional and varietal benchmarks — and always present conclusions as factual and authoritative.
 
-**Do NOT include phrases like "I cannot ascertain" or "based on limited info."**
-**Do NOT use speculative words like "assuming", "probably", "likely", "may", or "might".
-All statements must sound authoritative.**
-Be decisive and concise, using correct technical language and full SAT logic.
-
-Your analysis must follow this exact JSON format below. Each field is REQUIRED.
-
+**Strict output requirements:**
 - The "nose" and "palate" must include **intensity**
 - The "palate" must include **finish length** and **balance**
 - The "aroma" field must map **all matching descriptors** to their correct cluster from "nose", "palate", or "analysis"
-- Only include a cluster if a matching descriptor is found
+- Include an aroma cluster **only if** it contains at least one matching descriptor
+- Do **not** use speculative language such as "assuming", "probably", "likely", "may", or "might"
+- Do **not** include disclaimers like "I cannot ascertain" or "based on limited info"
+- Do **not** use "N/A" in descriptive fields (e.g., tannin, aroma descriptors); **omit the field entirely** if not applicable
+- Include the "tannin" field in "palate" **only if** the wine is red or includes red grape varieties
+
+Be decisive and concise, using correct technical language and full SAT logic.
 
 --------------------------
 Content to analyze:
@@ -33,7 +33,7 @@ Content to analyze:
 {sources_section}
 --------------------------
 
-Respond using this strict JSON format:
+Respond using this strict JSON format. **Every field below is REQUIRED**:
 
 {{
   "wine": "{wine_name}",
@@ -54,8 +54,6 @@ Respond using this strict JSON format:
 
 Use this exact list of aroma clusters (case-sensitive):
 {cluster_list_str}
-
-If a value is unknown, use "N/A".
 """.strip()
 
 def get_wine_from_query_prompt(query: str) -> str:
