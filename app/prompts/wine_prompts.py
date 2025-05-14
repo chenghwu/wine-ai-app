@@ -12,20 +12,23 @@ def get_sat_prompt(
 
     return f"""
 You are a Master of Wine who has also completed the WSET Level 4 Diploma in Wines. 
-Using the WSET Systematic Approach to Tasting (SAT), analyze the wine "{wine_name}" based on the content below. 
-Even if some data is missing, apply expert-level reasoning grounded in regional and varietal benchmarks — and always present conclusions as factual and authoritative.
-
-**Do NOT include phrases like "I cannot ascertain" or "based on limited info."**
-**Do NOT use speculative words like "assuming", "probably", "likely", "may", or "might".
-All statements must sound authoritative.**
+Analyze the wine "{wine_name}" using the WSET Systematic Approach to Tasting (SAT), based on the content below.
+Even with partial data, apply expert-level reasoning grounded in regional and varietal benchmarks.
+Always present conclusions as factual and authoritative.
 Be decisive and concise, using correct technical language and full SAT logic.
 
 Your analysis must follow this exact JSON format below. Each field is REQUIRED.
 
 - The "nose" and "palate" must include **intensity**
-- The "palate" must include **finish length** and **balance**
-- The "aroma" field must map **all matching descriptors** to their correct cluster from "nose", "palate", or "analysis"
-- Only include a cluster if a matching descriptor is found
+- The "palate" must include: sweetness, acidity, alcohol, body, flavor intensity, flavor characteristics, finish length, and balance
+- Include the "tannin" field in "palate" **only if the wine is red or contains red grape varieties**
+- In the "aroma" object:
+  - Extract and map **every aroma descriptor** mentioned in the "nose", "palate", or "analysis" to their correct cluster from the list below
+  - Assign each descriptor to the **single most contextually appropriate aroma cluster** from the list below
+  - **Never include an aroma cluster unless it contains at least one descriptor**
+  - **Do NOT include empty arrays** (e.g., "Red fruit": [])
+- **Do NOT** use speculative words (e.g., "probably", "might", "assuming")
+- **Do NOT** include disclaimers like "based on limited info" or "I cannot ascertain"
 
 --------------------------
 Content to analyze:
@@ -38,9 +41,9 @@ Respond using this strict JSON format:
 {{
   "wine": "{wine_name}",
   "grape_varieties": "Grape varieties composition of the wine (e.g. 85% Cabernet Sauvignon, 15% Merlot)",
-  "appearance": "clarity, intensity, color (e.g., clear, medium intensity, ruby)",
-  "nose": "cleanliness, intensity, list of aroma characteristics (e.g., clean, pronounced, red cherry, blackcurrant, cedar, leather)",
-  "palate": "sweetness, acidity, tannin, alcohol, body, flavor intensity, flavor characteristics, finish length, and whether it is balanced (e.g., dry, high acidity, medium+ tannin, full body, pronounced intensity, flavors of blackberry, vanilla, mushroom, long finish, balanced)",
+  "appearance": "Clarity, intensity, color (e.g., clear, medium intensity, ruby)",
+  "nose": "Cleanliness, intensity, list of aroma characteristics (e.g., clean, pronounced, red cherry, blackcurrant, cedar, leather)",
+  "palate": "Sweetness, acidity, tannin, alcohol, body, flavor intensity, flavor characteristics, finish length, and whether it is balanced (e.g., dry, high acidity, medium+ tannin, medium alcohol, full body, pronounced intensity, flavors of blackberry, vanilla, mushroom, long finish, balanced)",
   "aging": "Expected aging potential and why (e.g., Can age for 10–15 years due to high tannin, acidity, and concentration; or not suitable for bottle ageing)",
   "quality": "Choose one: Poor, Acceptable, Good, Very Good, Outstanding",
   "average_price": "Estimated average market price in U.S. dollars (e.g. US$120)",
@@ -54,8 +57,6 @@ Respond using this strict JSON format:
 
 Use this exact list of aroma clusters (case-sensitive):
 {cluster_list_str}
-
-If a value is unknown, use "N/A".
 """.strip()
 
 def get_wine_from_query_prompt(query: str) -> str:
