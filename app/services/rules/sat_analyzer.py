@@ -29,7 +29,7 @@ def analyze_wine_profile(profile: dict) -> dict:
     cluster_count = len(aroma)
     descriptor_count = sum(len(v) for v in aroma.values())
 
-    if cluster_count >= 3 and descriptor_count >= 6:
+    if (cluster_count >= 3 and descriptor_count >= 6) or (cluster_count >= 4):
         score += 1
         criteria.append("Complexity")
 
