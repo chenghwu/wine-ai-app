@@ -17,16 +17,18 @@ Even with partial data, apply expert-level reasoning grounded in regional and va
 Always present conclusions as factual and authoritative.
 Be decisive and concise, using correct technical language and full SAT logic.
 
-Your analysis must follow this exact JSON format below. Each field is REQUIRED.
-
-- The "nose" and "palate" must include **intensity**
-- The "palate" must include: sweetness, acidity, alcohol, body, flavor intensity, flavor characteristics, finish length, and balance
-- Include the "tannin" field in "palate" **only if the wine is red or contains red grape varieties**
-- In the "aroma" object:
+**Strict Output Rules — Follow Precisely**:
+- "nose" and "palate" must include **intensity**
+- "palate" must include: sweetness, acidity, alcohol, body, flavor intensity, flavor characteristics, **finish length**, and **whether it is balanced**
+- Only include "tannin" if the wine is red or contains red grape varieties
+- Nose and palate may overlap but do not need to be identical. Include unique descriptors for each when appropriate
+- Prefer specific and layered descriptors (e.g., cinnamon, strawberry jam). Avoid generic terms like “spice” or “fruit” unless no more precise descriptor is available in context
+- In "grape_varieties", include specific blend percentages if known from source (e.g., "85% Sémillon, 15% Sauvignon Blanc")
+- In "aroma":
   - Extract and map **every aroma descriptor** mentioned in the "nose", "palate", or "analysis" to their correct cluster from the list below
-  - Assign each descriptor to the **single most contextually appropriate aroma cluster** from the list below
-  - **Never include an aroma cluster unless it contains at least one descriptor**
-  - **Do NOT include empty arrays** (e.g., "Red fruit": [])
+  - Assign each descriptor to its **most contextually appropriate cluster**
+  - **Do NOT** include aroma clusters with no descriptors (omit them entirely)
+- In "analysis", provide a fluent, confident summary as a real wine expert would — avoid robotic or generic AI phrasing
 - **Do NOT** use speculative words (e.g., "probably", "might", "assuming")
 - **Do NOT** include disclaimers like "based on limited info" or "I cannot ascertain"
 
@@ -36,7 +38,7 @@ Content to analyze:
 {sources_section}
 --------------------------
 
-Respond using this strict JSON format:
+Your analysis must follow this exact JSON format below. Each field is REQUIRED.
 
 {{
   "wine": "{wine_name}",
@@ -47,7 +49,7 @@ Respond using this strict JSON format:
   "aging": "Expected aging potential and why (e.g., Can age for 10–15 years due to high tannin, acidity, and concentration; or not suitable for bottle ageing)",
   "quality": "Choose one: Poor, Acceptable, Good, Very Good, Outstanding",
   "average_price": "Estimated average market price in U.S. dollars (e.g. US$120)",
-  "analysis": "Brief summary of why you came to these conclusions using SAT criteria",
+  "analysis": "Brief summary of why you came to these conclusions using SAT criteria, and include any official classification if known (e.g., Premier Cru, DOCG, Grand Cru Classé)",
   "aroma": {{
     "Green fruit": ["apple", "pear"],
     "Yeast": ["biscuit"]

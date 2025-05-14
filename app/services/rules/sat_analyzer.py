@@ -1,10 +1,11 @@
 from app.utils.aroma_lexicon import aroma_lexicon
+from app.utils.post_llm_process import clean_aroma_clusters
 
 def analyze_wine_profile(profile: dict) -> dict:
     appearance = profile.get("appearance", "").lower()
     nose = profile.get("nose", "").lower()
     palate = profile.get("palate", "").lower()
-    aroma = profile.get("aroma", {}) or {}
+    aroma = clean_aroma_clusters(profile.get("aroma", {}) or {})
 
     score = 0
     criteria = []
@@ -28,7 +29,7 @@ def analyze_wine_profile(profile: dict) -> dict:
     cluster_count = len(aroma)
     descriptor_count = sum(len(v) for v in aroma.values())
 
-    if cluster_count >= 3 and descriptor_count >= 6:
+    if (cluster_count >= 3 and descriptor_count >= 6) or (cluster_count >= 4):
         score += 1
         criteria.append("Complexity")
 
