@@ -25,7 +25,7 @@ async def handle_wine_analysis_query(request):
 
     result = parse_wine_query_with_gemini(query)
     winery, wine, vintage = result["winery"], result["wine_name"], result["vintage"]
-    logger.info(f"Parsed wine info - 'winery: {winery}, wine: {wine}, vintage: {vintage}")
+    logger.info(f"Parsed wine info - winery: {winery}, wine: {wine}, vintage: {vintage}")
 
     wine_name = ""
     if wine.casefold() in winery.casefold():
