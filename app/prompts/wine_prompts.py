@@ -24,13 +24,13 @@ All structure-related attributes must follow SAT levels.
 - "palate" must include: sweetness, acidity, alcohol, body, flavor intensity, flavor characteristics, **finish length**, and **whether it is balanced**
 - Only include "tannin" if the wine is red or contains red grape varieties
 - Nose and palate may overlap but do not need to be identical. Include unique descriptors for each when appropriate
-- Prefer specific and layered descriptors (e.g., cinnamon, strawberry jam). Avoid generic terms like “spice” or “fruit” unless no more precise descriptor is available in context
+- Prefer specific, layered SAT-style descriptors (e.g., cinnamon, clove, strawberry jam). Do **not** include vague or generic terms like “spice”, “earth”, or “fruit” in the `aroma` field unless no better descriptor is present in the source
 - In "grape_varieties", include specific blend percentages if known from source (e.g., "85% Sémillon, 15% Sauvignon Blanc")
 - In "aroma":
   - Extract and map **every aroma descriptor** mentioned in the "nose", "palate", or "analysis" to their correct cluster from the list below
   - Assign each descriptor to its **most contextually appropriate cluster**
   - **Do NOT** include aroma clusters with no descriptors (omit them entirely)
-- In "analysis", provide a fluent, confident summary as a real wine expert would — avoid robotic or generic AI phrasing
+- In “analysis”, interpret the wine’s style, quality, and aging potential using SAT logic and regional benchmarks. Avoid restating attributes — provide real insight, written fluently and confidently like a wine expert.
 - **Do NOT** use speculative words (e.g., "probably", "might", "assuming")
 - **Do NOT** include disclaimers like "based on limited info" or "I cannot ascertain"
 
