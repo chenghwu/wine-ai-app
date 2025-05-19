@@ -1,8 +1,17 @@
 import os
+import sys
 from dotenv import load_dotenv
 import google.generativeai as genai
 
 load_dotenv()
+
+# Patch DATABASE_URL during local pytest to use localhost
+if "pytest" in sys.modules:
+    db_url = os.getenv("DATABASE_URL", "")
+    if "postgres:5432" in db_url:
+        patched_url = db_url.replace("postgres:5432", "localhost:5432")
+        os.environ["DATABASE_URL"] = patched_url
+        print(f"\nPatched DATABASE_URL for local pytest: {patched_url}")
 
 def setup_gemini_env():
     env = os.getenv("ENV", "prod")
