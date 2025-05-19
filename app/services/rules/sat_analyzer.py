@@ -16,7 +16,7 @@ def analyze_wine_profile(profile: dict) -> dict:
         criteria.append("Balance")
 
     # === L: Length ===
-    if "long" in palate or "long finish" in palate:
+    if "long finish" in palate or "long finish length" in palate:
         score += 1
         criteria.append("Length")
 

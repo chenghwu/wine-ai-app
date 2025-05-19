@@ -38,7 +38,14 @@ def google_search_links_with_retry(
     api_key, cx = get_google_keys()
     query = f"{wine_name} wine review"
     
-    def fetch_urls():
+    def extract_google_spelling_correction(response_json: dict) -> str | None:
+        """Extract spelling suggestion from Google Custom Search JSON."""
+        try:
+            return response_json["spelling"]["correctedQuery"]
+        except KeyError:
+            return None
+
+    def fetch_urls(query: str) -> list[str]:
         seen_domains = set()
         results = []
         pages = (max_results + 9) // 10  # ceil(max_results / 10)
@@ -58,7 +65,17 @@ def google_search_links_with_retry(
                 try:
                     response = requests.get(url, params=params)
                     response.raise_for_status()
-                    for item in response.json().get("items", []):
+                    data = response.json()
+                    items = data.get("items", [])
+
+                    # Try spelling correction if no results
+                    if not items:
+                        if (suggested := extract_google_spelling_correction(data)):
+                            logger.info(f"[Google API] No results, retrying with suggestion: {suggested}")
+                            return fetch_urls(suggested)
+                        return []
+
+                    for item in items:
                         link = item.get("link")
                         if not link:
                             continue
@@ -86,4 +103,4 @@ def google_search_links_with_retry(
 
         return results
 
-    return get_cache_or_fetch("search", query, fetch_urls)
+    return get_cache_or_fetch("search", query, lambda: fetch_urls(query))
