@@ -103,3 +103,11 @@ SHORT_TERM_REFERENCES = [
     "unfiltered", "natural", "organic", "biodynamic", "oak aged", "barrel fermented",
     "wild yeast", "lees", "malolactic", "hand-harvested",
 ]
+
+LONG_FINISH_PHRASES = [
+    "long finish", "lingering finish", "persistent finish",
+    "long-lasting finish", "lengthy finish", "extended finish"
+]
+
+# Increase if too many false positive, decrease if missing legitiamte variations
+LONG_FINISH_SIM_THRESHOLD = 0.65
