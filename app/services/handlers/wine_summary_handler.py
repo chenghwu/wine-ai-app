@@ -5,6 +5,7 @@ from app.services.llm.search_and_summarize import summarize_wine_info
 from app.services.rules.sat_analyzer import analyze_wine_profile
 from app.utils.mock import generate_mock_summary
 from app.utils.normalize import to_title_case_wine_name
+import json
 import logging
 import time
 
@@ -94,7 +95,9 @@ async def handle_fresh_summary(session, wine_name, query, request):
         )
 
     # SAT Rule-based analysis
-    summary["sat"] = analyze_wine_profile(summary)
+    sat_result = analyze_wine_profile(summary)
+    logger.info("[SAT] Result from analyze_wine_profile:\n%s", json.dumps(sat_result, indent=2))
+    summary["sat"] = sat_result
 
     # Save to DB
     logger.info(f"Saving to DB: '{wine_name}'")
