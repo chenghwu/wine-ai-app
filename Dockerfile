@@ -15,6 +15,9 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir --target=/install -r requirements.txt && \
     rm -rf /root/.cache/pip /tmp/*
 
+# Install Playwright browser dependencies
+RUN python -m playwright install --with-deps chromium
+
 # Set PYTHONPATH so the next command can find packages in /install
 ENV PYTHONPATH=/install
 
@@ -35,7 +38,11 @@ COPY --from=builder /install /usr/local/lib/python3.11/site-packages/
 # Copy preloaded model cache from builder
 COPY --from=builder /root/.cache /root/.cache
 
+# Copy Playwright browser binaries from builder
+COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
+
 ENV PYTHONPATH=/usr/local/lib/python3.11/site-packages/
+ENV PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright
 
 # Expose FastAPI port and run the server
 ENV PORT=8080

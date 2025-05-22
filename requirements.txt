@@ -13,3 +13,4 @@ python-dotenv
 sentence-transformers
 sqlalchemy
 uvicorn
+crawl4ai

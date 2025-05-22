@@ -1,107 +1,75 @@
 import asyncio
-import httpx
 import logging
 import requests
 import time
 import re
-from bs4 import BeautifulSoup
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, BrowserConfig, CacheMode
 from app.exceptions import GoogleSearchApiError, GeminiApiError
 from app.services.llm.gemini_engine import summarize_with_gemini
 from app.utils.cache import get_cache_or_fetch_async
 from app.utils.search import google_search_links_with_retry
-from app.utils.text_cleaning import is_probably_binary, clean_aggressively
 from app.utils.url_utils import is_valid_url
 
 logger = logging.getLogger(__name__)
-
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-
-# The main crawling part, to be improved
-async def fetch_full_text_from_url_async(url: str) -> str:
-    # Skip PDF files for now
-    if url.lower().endswith(".pdf"):
-        logger.info(f"[SKIPPED] PDF file not supported: {url}")
-        return ""
-
-    try:
-        async with httpx.AsyncClient(
-            timeout=httpx.Timeout(10.0, connect=3.0),
-            headers={"User-Agent": USER_AGENT}
-        ) as client:
-            response = await client.get(url)
-            response.raise_for_status()
-
-            raw_html = response.text
-            # Early Normalization — skip non-HTML or broken pages
-            if "<html" not in raw_html.lower() or len(raw_html) < 300:
-                logger.warning(f"[SKIPPED] Too short or invalid HTML at {url}")
-                return ""
-
-            soup = BeautifulSoup(response.text, "html.parser")
-
-            # Heuristic: Trimmed soup selector — target main content areas
-            for tag in ["article", "main", "section", "div"]:
-                content = soup.select_one(tag)
-                if content:
-                    text = content.get_text(separator="\n")
-                    if len(text.strip()) > 200:
-                        return clean_aggressively(text)
-
-            logger.info(f"No main tag found, using fallback for: {url}")
-
-            # Fallback to whole page
-            fallback_text = soup.get_text(separator="\n")
-            if is_probably_binary(fallback_text):
-                logger.warning(f"[SKIPPED] Binary-like content from {url}")
-                return ""
-
-            # Apply full cleaning pipeline to remove noisy info
-            cleaned = clean_aggressively(fallback_text)
-            if len(cleaned.strip()) < 100:
-                logger.warning(f"Fetched content is too short from {url}")
-                return ""
-            
-            return cleaned
-
-    except httpx.TimeoutException:
-        logger.warning(f"[TIMEOUT] URL timed out: {url}")
-        return ""
-    except Exception as e:
-        logger.error(f"[ERROR] Failed to fetch {url}: {e}")
-        return ""
 
 # Function to concurrently crawl and aggregate page content from links
 async def aggregate_page_content_async(
     search_links: list[str],
     wine_name: str,
-    max_concurrent: int = 5,
-    slow_threshold: float = 5.0  # seconds
+    max_concurrent: int = 5, # This might be less relevant with Crawl4AI's pooling
+    slow_threshold: float = 5.0
 ) -> str:
-    sem = asyncio.Semaphore(max_concurrent)  # limits concurrent fetches
-    wine_name_tokens = set(wine_name.lower().split())   # Normalize wine name tokens
+    wine_name_tokens = set(wine_name.lower().split())
 
-    async def get_text(url: str) -> str:
-        async with sem:
-            key = f"{wine_name}({url})"
-            try:
-                start = time.perf_counter()
-                raw_text = await get_cache_or_fetch_async(
-                    "html",
-                    key,
-                    lambda: fetch_full_text_from_url_async(url)
-                )
-                duration = time.perf_counter() - start
-                logger.info(f"[FETCHED] {url} in {duration:.2f}s")
-                if duration > slow_threshold:
-                    logger.warning(f"[SLOW] {url} took {duration:.2f}s to fetch")
+    browser_config = BrowserConfig(
+        headless=True,
+        # Consider adding user_agent if needed, e.g. from a global constant
+    )
+    # Using default run_config for now. fit_markdown is default.
+    # Disable Crawl4AI's own cache to rely on the project's existing cache mechanism first.
+    run_config = CrawlerRunConfig(cache_mode=CacheMode.DISABLED)
+    
+    crawler = AsyncWebCrawler(config=browser_config)
+    await crawler.start() # Start the crawler (browser pool)
 
-                return raw_text or ""
-            except Exception as e:
-                logger.error(f"Failed to fetch or cache {url}: {e}")
-                return ""
+    async def get_content_with_crawl4ai(url: str) -> str:
+        try:
+            # Assuming crawler.arun returns an object with a markdown attribute
+            # (e.g., result.markdown.fit_markdown or result.markdown.raw_markdown)
+            logger.info(f"Fetching with Crawl4AI: {url}")
+            crawl_result = await crawler.arun(url=url, config=run_config)
+            if crawl_result.success and crawl_result.markdown:
+                # Using fit_markdown if available, else raw_markdown
+                content = crawl_result.markdown.fit_markdown if crawl_result.markdown.fit_markdown else crawl_result.markdown.raw_markdown
+                return content
+            logger.warning(f"Crawl4AI failed or returned no markdown for {url}. Error: {crawl_result.error_message if crawl_result.error_message else 'No markdown content'}")
+            return ""
+        except Exception as e:
+            logger.error(f"Exception during Crawl4AI fetch for {url}: {e}")
+            return ""
 
-    # Must contain at least 2 matching tokens from wine_name
+    async def get_text_via_cache(url: str) -> str:
+        # key uses wine_name and url, consistent with old approach
+        key = f"{wine_name}({url})" 
+        try:
+            start = time.perf_counter()
+            # The lambda now calls get_content_with_crawl4ai
+            raw_text = await get_cache_or_fetch_async(
+                "html_crawl4ai", # New cache type to avoid conflicts
+                key,
+                lambda: get_content_with_crawl4ai(url) 
+            )
+            duration = time.perf_counter() - start
+            logger.info(f"[FETCHED_C4AI] {url} in {duration:.2f}s (via cache or fetch)")
+            if duration > slow_threshold and raw_text: # Check if raw_text is not empty
+                 logger.warning(f"[SLOW_C4AI] {url} took {duration:.2f}s to fetch/process")
+            return raw_text or ""
+        except Exception as e:
+            logger.error(f"Failed to fetch or cache {url} with Crawl4AI: {e}")
+            return ""
+
     def is_relevant(text: str) -> bool:
+        if not text: return False # Handle empty text
         text_lower = text.lower()
         count = 0
         for token in wine_name_tokens:
@@ -111,19 +79,22 @@ async def aggregate_page_content_async(
                     return True
         return False
 
-    # Fetch all text
-    tasks = [get_text(url) for url in search_links]
-    raw_results = await asyncio.gather(*tasks)
+    try:
+        tasks = [get_text_via_cache(url) for url in search_links]
+        raw_results = await asyncio.gather(*tasks)
 
-    filtered_texts = [
-        text.strip() for text in raw_results
-        if isinstance(text, str) and is_relevant(text)]
+        filtered_texts = [
+            text.strip() for text in raw_results
+            if isinstance(text, str) and is_relevant(text) # Apply relevance filter
+        ]
 
-    if not filtered_texts:
-        return {"error": "No relevant content found for summarization."}
+        if not filtered_texts:
+            return {"error": "No relevant content found for summarization after Crawl4AI processing."}
 
-    joined = "\n".join(filtered_texts)
-    return re.sub(r"\{2,}", " ", joined).strip()
+        joined = "\n\n".join(filtered_texts) # Using double newline to better separate documents
+        return re.sub(r"\n{3,}", "\n\n", joined).strip() # Normalize multiple newlines
+    finally:
+        await crawler.stop() # Ensure crawler is stopped
 
 # Function to call google search engine API and gemini API to summarize wine info
 async def summarize_wine_info(wine_name: str) -> dict:
