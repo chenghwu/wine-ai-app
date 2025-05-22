@@ -20,28 +20,29 @@ A full-stack AI-powered wine analysis platform that combines expert-level sensor
 ## 🖥️ Tech Stack
 
 ### Frontend
-- **React** via **Next.js (App Router)**
+- **React** via **Next.js 15+ (App Router)**
 - TypeScript
 - **Tailwind CSS** for utility-first styling
-- Deployed on **Vercel**
+- Deployed on **Firebase Hosting**
 
 ### Backend
 - **FastAPI** (Python 3.11)
 - **Gemini LLM** via MCP API
 - **Google Programmable Search API**
 - **File-based and PostgreSQL caching**
-- Deployed on **Render**
+- Deployed on **Google Cloud Run**
 
 ### Database
 - **PostgreSQL** (schema-migrated via Alembic)
 - Local: Dockerized
-- Cloud: Render PostgreSQL instance
+- Cloud: PostgreSQL (hosted on Neon)
 
 ### DevOps / Infrastructure
 - **Docker** & **Docker Compose** for local development
 - `Makefile` to simplify startup (`make docker-compose-up`)
 - `.env` configuration for secrets + runtime toggles
 - Environment-based mock response engine
+- Service health monitored by **UptimeRobot**
 
 ---
 
@@ -50,12 +51,20 @@ A full-stack AI-powered wine analysis platform that combines expert-level sensor
 ```
 wine_ai_app/
 ├── app/                   # FastAPI backend
-│   ├── api/               # Routes
-│   ├── db/                # DB models, session, init
-│   ├── services/          # LLM, rules, handlers
-│   ├── models/            # MCP request models
-│   ├── prompts/           # LLM prompts
-│   └── utils/             # Caching, env, search
+│   ├── api/               # API routes
+│   ├── db/                # Database interactions
+│   │   ├── crud/          # CRUD database operations
+│   │   ├── models/        # SQLAlchemy models
+│   │   └── session.py     # DB session management
+│   ├── models/            # Pydantic models for request/response
+│   ├── prompts/           # LLM prompt templates
+│   ├── services/          # Business logic (LLM, rules, handlers)
+│   ├── scripts/           # Utility and maintenance scripts
+│   ├── utils/             # Common utilities (caching, env, search)
+│   ├── config.py          # Application configuration
+│   ├── exceptions.py      # Custom exceptions
+│   ├── main.py            # FastAPI application entry point
+│   └── version.py         # Application version
 │
 ├── frontend/              # Next.js frontend (App Router)
 │   ├── src/components/    # SearchInput, ResultCard, etc.
@@ -80,7 +89,7 @@ wine_ai_app/
 ### Prerequisites
 
 - Python 3.11+
-- Node.js 18+
+- Node.js 20+
 - Docker (for DB + backend)
 - `.env` and `.env.local` for API keys/config
 
@@ -145,17 +154,24 @@ make test
 
 ## 🚀 Deployment
 
-### Frontend (Vercel)
-Frontend is deployed to Vercel using:
-- Auto-deployment from GitHub
-- Vercel environment variables (`NEXT_PUBLIC_API_URL`, etc.)
-- `frontend/` as root, using default build settings
+### Frontend (Firebase Hosting)
+The frontend is deployed to Firebase Hosting using GitHub Actions:
+- CI/CD pipeline triggered on pushes to `main` and `dev` branches.
+- `main` branch deploys to the production Firebase Hosting site.
+- `dev` branch deploys to a separate development Firebase Hosting site.
+- Node.js 20.x is used for building the Next.js application.
+- Firebase CLI (`firebase-tools`) is used for deployment.
+- Environment variables (`NEXT_PUBLIC_API_URL`, etc.) are configured during the build step in GitHub Actions.
 
-### Backend (Render)
-FastAPI backend is deployed on Render:
-- `Dockerfile`-based deployment
-- Environment variables configured in Render Dashboard
-- PostgreSQL and `make docker-compose-up` for local mirroring
+### Backend (Google Cloud Run)
+The FastAPI backend is deployed to Google Cloud Run using GitHub Actions:
+- CI/CD pipeline triggered on pushes to `main` and `dev` branches.
+- Docker images are built using Google Cloud Build and pushed to Google Artifact Registry.
+  - `main` branch images are tagged `latest` for the production service (`wine-api`).
+  - `dev` branch images are tagged `dev` for the development service (`wine-api-dev`).
+- Environment variables are managed using `.env` files (converted to `env.yaml` by `scripts/convert_env_to_yaml.py`) and applied during Cloud Run deployment.
+- The service runs on a managed platform with 1 CPU and 1Gi memory.
+- For local development, a PostgreSQL database can be run via Docker Compose (`make docker-compose-up`), mirroring the cloud setup which connects to a PostgreSQL instance hosted on Neon.
 
 ---
 
