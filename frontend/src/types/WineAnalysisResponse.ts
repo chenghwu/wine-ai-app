@@ -11,6 +11,7 @@ export type WineAnalysisResponse =
   | {
       status: 'success'
       wine: string
+      region: string
       grape_varieties: string
       appearance: string
       nose: string
