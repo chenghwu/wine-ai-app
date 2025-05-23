@@ -19,6 +19,7 @@ export function ResultCard({ response }: ResultCardProps) {
       </h2>
 
       <ul className="space-y-2 text-sm">
+        <InfoItem label="Region" value={response.region} />
         <InfoItem label="Grape Varieties" value={response.grape_varieties} />
         <InfoItem label="Appearance" value={response.appearance} />
         <InfoItem label="Nose" value={response.nose} />
