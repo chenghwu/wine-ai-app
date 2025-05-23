@@ -20,7 +20,15 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    op.add_column('wine_summaries', sa.Column('region', sa.String(length=255), nullable=False, server_default=sa.text("''")))
+    # Step 1: Add the region column as nullable initially
+    op.add_column('wine_summaries', sa.Column('region', sa.String(length=255), nullable=True))
+
+    # Step 2: Backfill existing rows
+    wine_summaries_table = sa.sql.table('wine_summaries', sa.sql.column('region', sa.String))
+    op.execute(wine_summaries_table.update().where(wine_summaries_table.c.region.is_(None)).values(region=''))
+
+    # Step 3: Alter the column to be non-nullable and set server default
+    op.alter_column('wine_summaries', 'region', existing_type=sa.String(length=255), nullable=False, server_default=sa.text("''"))
 
 
 def downgrade() -> None:

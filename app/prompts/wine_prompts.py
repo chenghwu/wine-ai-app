@@ -45,7 +45,7 @@ Return your output in this exact JSON format (but with real values):
 
 {{
   "wine": "{wine_name}",
-  "region": "The specific wine region, including country (e.g., Napa Valley, CA, USA or Pauillac, France). This field is mandatory. If the region cannot be determined from the context, provide \"Unknown\" as the value.",
+  "region": "The specific wine region, including country (e.g., Napa Valley, CA, USA or Pauillac, France)",
   "grape_varieties": "Exact blend if known (e.g., 85% Cabernet Sauvignon, 15% Merlot). If not provided, use the most accurate composition based on content — no vague or speculative terms.",
   "appearance": "e.g., Clear, pale ruby",
   "nose": "e.g. Clean, pronounced, black cherry, vanilla, cedar",
