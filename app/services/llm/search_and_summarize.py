@@ -1,7 +1,6 @@
 import asyncio
 import httpx
 import logging
-import requests
 import time
 import re
 from bs4 import BeautifulSoup
@@ -15,31 +14,77 @@ from app.utils.url_utils import is_valid_url
 logger = logging.getLogger(__name__)
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2MB
 
-# The main crawling part, to be improved
+# Helper: Extract and clean fallback text from full page soup
+def extract_fallback_text(soup: BeautifulSoup, url: str) -> str:
+    fallback_text = soup.get_text(separator="\n")
+    if is_probably_binary(fallback_text):
+        logger.warning(f"[SKIPPED] Binary-like content from {url}")
+        return ""
+    cleaned = clean_aggressively(fallback_text)
+    if len(cleaned.strip()) < 100:
+        logger.warning(f"Fetched content is too short from {url}")
+        return ""
+    return cleaned
+
+# The main crawling function
 async def fetch_full_text_from_url_async(url: str) -> str:
-    # Skip PDF files for now
     if url.lower().endswith(".pdf"):
         logger.info(f"[SKIPPED] PDF file not supported: {url}")
         return ""
 
+    # HEAD request to pre-screen the content
+    try:
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(5.0, connect=2.0),
+            headers={"User-Agent": USER_AGENT},
+            follow_redirects=True
+        ) as head_client:
+            head_response = await head_client.head(url)
+            head_response.raise_for_status()
+
+            headers = head_response.headers
+            content_type = headers.get("content-type", "").lower()
+            if content_type and not (
+                content_type.startswith("text/html") or
+                content_type.startswith("text/plain") or
+                content_type.startswith("application/xhtml+xml") or
+                content_type.startswith("application/xml")
+            ):
+                logger.info(f"[SKIPPED] Non-HTML/text content type ({content_type}) from HEAD: {url}")
+                return ""
+
+            content_length_str = headers.get("content-length")
+            if content_length_str:
+                try:
+                    content_length = int(content_length_str)
+                    if content_length > MAX_CONTENT_LENGTH:
+                        logger.info(f"[SKIPPED] Content length ({content_length}) exceeds limit from HEAD: {url}")
+                        return ""
+                except ValueError:
+                    logger.warning(f"Invalid content-length value: {content_length_str} from HEAD for {url}")
+    except (httpx.RequestError, httpx.HTTPStatusError, Exception) as e:
+        logger.warning(f"[HEAD FAIL] {e}. Proceeding with GET: {url}")
+
+    # GET request for actual content
     try:
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(10.0, connect=3.0),
-            headers={"User-Agent": USER_AGENT}
+            headers={"User-Agent": USER_AGENT},
+            follow_redirects=True
         ) as client:
             response = await client.get(url)
             response.raise_for_status()
 
             raw_html = response.text
-            # Early Normalization — skip non-HTML or broken pages
             if "<html" not in raw_html.lower() or len(raw_html) < 300:
                 logger.warning(f"[SKIPPED] Too short or invalid HTML at {url}")
                 return ""
 
-            soup = BeautifulSoup(response.text, "html.parser")
+            soup = BeautifulSoup(raw_html, "html.parser")
 
-            # Heuristic: Trimmed soup selector — target main content areas
+            # Try extracting from main content tags
             for tag in ["article", "main", "section", "div"]:
                 content = soup.select_one(tag)
                 if content:
@@ -47,28 +92,17 @@ async def fetch_full_text_from_url_async(url: str) -> str:
                     if len(text.strip()) > 200:
                         return clean_aggressively(text)
 
-            logger.info(f"No main tag found, using fallback for: {url}")
-
-            # Fallback to whole page
-            fallback_text = soup.get_text(separator="\n")
-            if is_probably_binary(fallback_text):
-                logger.warning(f"[SKIPPED] Binary-like content from {url}")
-                return ""
-
-            # Apply full cleaning pipeline to remove noisy info
-            cleaned = clean_aggressively(fallback_text)
-            if len(cleaned.strip()) < 100:
-                logger.warning(f"Fetched content is too short from {url}")
-                return ""
-            
-            return cleaned
+            logger.info(f"[FALLBACK] No main tag found — using full page fallback for {url}")
+            return extract_fallback_text(soup, url)
 
     except httpx.TimeoutException:
-        logger.warning(f"[TIMEOUT] URL timed out: {url}")
-        return ""
+        logger.warning(f"[TIMEOUT] GET request timed out: {url}")
+    except httpx.HTTPStatusError as e:
+        logger.error(f"[HTTP ERROR] GET request failed for {url} with status {e.response.status_code}")
     except Exception as e:
-        logger.error(f"[ERROR] Failed to fetch {url}: {e}")
-        return ""
+        logger.error(f"[ERROR] GET request failed for {url}: {e}")
+
+    return ""
 
 # Function to concurrently crawl and aggregate page content from links
 async def aggregate_page_content_async(
@@ -85,13 +119,12 @@ async def aggregate_page_content_async(
             key = f"{wine_name}({url})"
             try:
                 start = time.perf_counter()
-                raw_text = await get_cache_or_fetch_async(
-                    "html",
-                    key,
-                    lambda: fetch_full_text_from_url_async(url)
-                )
+                async def fetch():
+                    return await fetch_full_text_from_url_async(url)
+                raw_text = await get_cache_or_fetch_async("html", key, fetch)
                 duration = time.perf_counter() - start
                 logger.info(f"[FETCHED] {url} in {duration:.2f}s")
+
                 if duration > slow_threshold:
                     logger.warning(f"[SLOW] {url} took {duration:.2f}s to fetch")
 
@@ -102,14 +135,7 @@ async def aggregate_page_content_async(
 
     # Must contain at least 2 matching tokens from wine_name
     def is_relevant(text: str) -> bool:
-        text_lower = text.lower()
-        count = 0
-        for token in wine_name_tokens:
-            if token in text_lower:
-                count += 1
-                if count >= 2:
-                    return True
-        return False
+        return sum(token in text.lower() for token in wine_name_tokens) >= 2
 
     # Fetch all text
     tasks = [get_text(url) for url in search_links]
@@ -133,6 +159,9 @@ async def summarize_wine_info(wine_name: str) -> dict:
         # Step 1: Get all links from google search engine
         t0 = time.perf_counter()
         search_links = google_search_links_with_retry(wine_name)
+        if not isinstance(search_links, list): # Basic check
+            logger.error(f"Failed to retrieve search links for {wine_name}. Received: {search_links}")
+            return {"error": "Failed to retrieve search links."}
         timings["google_search"] = time.perf_counter() - t0
 
         # Step 2: Crawl the links and aggregate contents
@@ -141,7 +170,16 @@ async def summarize_wine_info(wine_name: str) -> dict:
         web_content = await aggregate_page_content_async(search_links, wine_name)
         timings["aggregate_pages"] = time.perf_counter() - t1
 
-        # Step 3: Gemini analysis
+        # CRITICAL FIX and check before Gemini call
+        if isinstance(web_content, dict) and "error" in web_content:
+            logger.error(f"Error during content aggregation for {wine_name}: {web_content['error']}")
+            return web_content
+
+        if not isinstance(web_content, str):
+            logger.error(f"Web content is not a string after aggregation for {wine_name}: {type(web_content)}. Content: {web_content}")
+            return {"error": "Failed to process web content for summarization."}
+
+        # Step 3: Gemini analysis (proceed only if web_content is a valid string)
         logger.info("Sending to Gemini for analysis...")
         t2 = time.perf_counter()
         summary = summarize_with_gemini(wine_name, web_content, search_links)
