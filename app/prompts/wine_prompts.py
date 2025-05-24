@@ -28,8 +28,8 @@ Follow these rules exactly:
   - Map each descriptor to its **most contextually appropriate cluster** from the list below
   - Use "Other aroma" only when no suitable cluster fits
   - Do **not** invent descriptors or include clusters with no descriptors
-
 - In "analysis", interpret what the SAT attributes reveal about the wine’s **style, quality, and aging potential**, referencing regional or classification benchmarks. Write fluently and confidently, as if speaking to sommeliers or collectors. **Do not repeat SAT terms or fields already covered**
+- For the "region" field, if the content does not specify all geographic levels (e.g., sub-region or appellation), infer them confidently based on well-established regional knowledge. Always provide the full hierarchy down to the country level. Do not skip components like “California” or “France” if the sub-region or appellation is known.
 
 **Avoid speculative words** like “likely”, “probably”, or disclaimers such as “based on limited info”. Present conclusions with confident, expert phrasing.
 
@@ -45,6 +45,7 @@ Return your output in this exact JSON format (but with real values):
 
 {{
   "wine": "{wine_name}",
+  "region": "e.g., Oakville, Napa Valley, California, USA; Pauillac, Bordeaux, France; or Barolo, Langhe, Piedmont, Italy",
   "grape_varieties": "Exact blend if known (e.g., 85% Cabernet Sauvignon, 15% Merlot). If not provided, use the most accurate composition based on content — no vague or speculative terms.",
   "appearance": "e.g., Clear, pale ruby",
   "nose": "e.g. Clean, pronounced, black cherry, vanilla, cedar",

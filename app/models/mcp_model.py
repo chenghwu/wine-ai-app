@@ -21,6 +21,7 @@ class SATResult(BaseModel):
 
 class MCPOutput(BaseModel):
     wine: str
+    region: str
     grape_varieties: str
     appearance: str
     nose: str

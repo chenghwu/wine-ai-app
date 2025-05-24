@@ -3,6 +3,7 @@ from app.models.mcp_model import MCPOutput
 def generate_mock_summary() -> MCPOutput:
     mock_data = {
         "wine": "Mock Wine 2018",
+        "region": "Mock Region",
         "grape_varieties": "85% Cabernet Sauvignon, 15% Merlot",
         "appearance": "Deep ruby",
         "nose": "Medium+ aromas of cassis, tobacco, mocha",

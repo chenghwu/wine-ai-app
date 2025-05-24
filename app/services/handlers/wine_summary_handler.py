@@ -12,7 +12,7 @@ import time
 logger = logging.getLogger(__name__)
 
 EXPECTED_SUMMARY_KEYS = {
-    "wine", "grape_varieties", "appearance", "nose", "palate", "aging",
+    "wine", "region", "grape_varieties", "appearance", "nose", "palate", "aging",
     "average_price", "quality", "analysis", "reference_source"
 }
 
@@ -93,6 +93,11 @@ async def handle_fresh_summary(session, wine_name, query, request):
             {"error": "Incomplete wine analysis generated. Please retry."},
             request
         )
+
+    # Ensure 'region' is not None before saving, default to "Unknown" if it is.
+    # An empty string "" is acceptable.
+    if summary.get('region') is None:
+        summary['region'] = "Unknown"
 
     # SAT Rule-based analysis
     sat_result = analyze_wine_profile(summary)
