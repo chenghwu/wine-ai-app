@@ -58,14 +58,13 @@ async def get_cache_or_fetch_async(category: str, key: str, fetch_func: Callable
     logger.info(f"Cache miss: {key} — calling async fetch function...")
     result = await fetch_func()
 
-    # Only cache if result is a non-empty string or valid JSON-like object
-    if isinstance(result, str) and result.strip():
-        async with aiofiles.open(path, "w") as f:
-            await f.write(json.dumps(result, indent=2))
-    elif isinstance(result, dict) and result:  # optional for dict-based fetches
+    if not result:
+        logger.warning(f"Empty result for {key}")
+    elif isinstance(result, (str, dict)) and result:
+        # Only cache if result is a non-empty string, valid JSON-like object, or dict-based
         async with aiofiles.open(path, "w") as f:
             await f.write(json.dumps(result, indent=2))
     else:
         logger.info(f"Skipping cache save: {key}")
     
-    return None
+    return result
