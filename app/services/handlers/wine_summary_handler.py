@@ -101,7 +101,6 @@ async def handle_fresh_summary(session, wine_name, query, request):
 
     # SAT Rule-based analysis
     sat_result = analyze_wine_profile(summary)
-    logger.info("[SAT] Result from analyze_wine_profile:\n%s", json.dumps(sat_result, indent=2))
     summary["sat"] = sat_result
 
     # Save to DB

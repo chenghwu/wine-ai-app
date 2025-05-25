@@ -52,7 +52,7 @@ Return your output in this exact JSON format (but with real values):
   "palate": "e.g. Dry, high acidity, medium+ tannin, medium alcohol, full body, pronounced, black cherry, chocolate, long finish, balanced",
   "aging": "Expected aging potential and reason (e.g., Can age 10–15 years due to structure and concentration)",
   "quality": "Choose one: Poor, Acceptable, Good, Very Good, Outstanding",
-  "average_price": "Estimated price in U.S. dollars (e.g., US$60–80)",
+  "average_price": "Estimated price in U.S. dollars (e.g., US$60–70)",
   "analysis": "Fluent expert commentary on structure, style, quality, and classification — do not repeat SAT terms",
   "aroma": {{
     "Green fruit": ["apple", "pear"],
