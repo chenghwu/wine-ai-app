@@ -7,7 +7,8 @@ import time
 from bs4 import BeautifulSoup
 from app.exceptions import GoogleSearchApiError, GeminiApiError
 from app.services.llm.gemini_engine import summarize_with_gemini
-from app.utils.cache import get_cache_or_fetch_async
+from app.utils.fetcher import get_relevant_text_and_cache
+from app.utils.logging import log_skipped
 from app.utils.search import google_search_links_with_retry
 from app.utils.text_cleaning import is_probably_binary, clean_aggressively
 from app.utils.url_utils import is_valid_url
@@ -17,9 +18,6 @@ logger = logging.getLogger(__name__)
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 MAX_CONCURRENT_FETCHES = int(os.getenv("MAX_CONCURRENT_FETCHES", 5))
 MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2MB
-
-def log_skipped(reason: str, url: str):
-    logger.warning(f"[SKIPPED] {reason} - {url}")
 
 # Helper: Extract and clean fallback text from full page soup
 def extract_fallback_text(soup: BeautifulSoup, url: str) -> str:
@@ -110,46 +108,35 @@ async def aggregate_page_content_async(
 ) -> str:
     logger.info(f"[SETUP] Using max_concurrent={max_concurrent} for fetching.")
     sem = asyncio.Semaphore(max_concurrent)  # limits concurrent fetches
-    wine_name_tokens = set(wine_name.lower().split())   # Normalize wine name tokens
 
-    async def get_text(url: str) -> str:
+    async def get_text(url: str) -> tuple[str, str]:
         async with sem:
-            key = f"{wine_name}({url})"
             try:
                 start = time.perf_counter()
                 async def fetch():
                     return await fetch_full_text_from_url_async(url)
-                raw_text = await get_cache_or_fetch_async("html", key, fetch)
 
+                raw_text, final_url = await get_relevant_text_and_cache("html", wine_name, url, fetch)
                 duration = time.perf_counter() - start
                 status = "SLOW" if duration > slow_threshold else "OK"
-                logger.info(f"[FETCHED-{status}] {url} in {duration:.2f}s")
+                logger.info(f"[FETCHED-{status}] {final_url} in {duration:.2f}s")
 
-                if not raw_text:
-                    log_skipped("No content returned", url)
-                    return ""
-
-                return raw_text
+                return raw_text, final_url
             except Exception as e:
                 logger.error(f"Failed to fetch or cache {url}: {e}")
-                return ""
+                return "", url
 
-    # Must contain at least 2 matching tokens from wine_name
-    def is_relevant(text: str) -> bool:
-        return sum(token in text.lower() for token in wine_name_tokens) >= 2
-
-    # Fetch all text
+    # Concurrently fetch all text
     tasks = [get_text(url) for url in search_links]
-    raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+    raw_results = await asyncio.gather(*tasks, return_exceptions=False)
+    #raw_results = await gather_in_chunks(tasks, max_concurrent)
 
-    filtered_texts = [
-        text.strip() for text in raw_results
-        if isinstance(text, str) and is_relevant(text)]
-
-    if not filtered_texts:
+    pairs = [result for result in raw_results if result is not None]
+    if not pairs:
         return {"error": "No relevant content found for summarization."}
 
-    joined = "\n".join(filtered_texts)
+    texts, urls = zip(*pairs)
+    joined = "\n".join(texts)
     return re.sub(r"\{2,}", " ", joined).strip()
 
 # Function to call google search engine API and gemini API to summarize wine info
@@ -181,7 +168,7 @@ async def summarize_wine_info(wine_name: str) -> dict:
             return {"error": "Failed to process web content for summarization."}
 
         # Step 3: Gemini analysis (proceed only if web_content is a valid string)
-        logger.info(f"[GEMINI] Started summarizing {wine_name}...")
+        logger.info(f"[GEMINI] Started summarizing web content (length: {len(web_content):,}) for {wine_name}...")
         t2 = time.perf_counter()
         summary = summarize_with_gemini(wine_name, web_content, search_links)
         timings["gemini"] = time.perf_counter() - t2
