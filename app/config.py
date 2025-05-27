@@ -14,6 +14,8 @@ EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 # Thresholds
 REFERENCE_SIM_THRESHOLD = 0.35  # used in is_semantically_wine_related
 SHORT_TERM_SIM_THRESHOLD = 0.6   # used in is_known_wine_term
+LONG_FINISH_SIM_THRESHOLD = 0.65 # increase if too many false positive, decrease if missing legitiamte variations
+WINE_NAME_SIM_THRESHOLD = 0.25
 
 # Content heuristics
 MIN_TEXT_BLOCK_LENGTH = 15
@@ -108,6 +110,3 @@ LONG_FINISH_PHRASES = [
     "long finish", "lingering finish", "persistent finish",
     "long-lasting finish", "lengthy finish", "extended finish"
 ]
-
-# Increase if too many false positive, decrease if missing legitiamte variations
-LONG_FINISH_SIM_THRESHOLD = 0.65
