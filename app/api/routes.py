@@ -9,6 +9,7 @@ from app.models.mcp_model import MCPRequest
 from app.services.handlers.wine_summary_handler import (
     handle_wine_analysis_query, handle_mock_response, handle_db_response, handle_fresh_summary
 )
+from app.services.handlers.food_pairing_handler import handle_food_pairing
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -57,6 +58,10 @@ async def chat_search_wine(request: MCPRequest, session: AsyncSession = Depends(
             "status": "error",
             "error": "Something went wrong while analyzing the wine. Please try again later."
         }
+
+@router.get("/pair-food", summary="Recommend food pairings for a wine")
+async def pair_food(wine_name: str, session: AsyncSession = Depends(get_async_session)):
+    return await handle_food_pairing(session, wine_name)
 
 @router.get("/wines", summary="Get all stored wine summaries")
 async def list_all_wines(session: AsyncSession = Depends(get_async_session)):
