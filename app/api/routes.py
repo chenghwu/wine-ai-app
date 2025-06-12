@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.crud.wine_summary import get_all_wine_summaries
 from app.db.session import get_async_session
 from app.exceptions import GoogleSearchApiError, GeminiApiError
-from app.models.mcp_model import MCPRequest
+from app.models.mcp_model import WineMCPRequest
 from app.services.handlers.wine_summary_handler import (
     handle_wine_analysis_query, handle_mock_response, handle_db_response, handle_fresh_summary
 )
@@ -15,8 +15,8 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 # Extract user query, use Google Programmable Search Engine and Gemini to search and aggregate info
-@router.post("/chat-search-wine", summary="Search wine info using LLM and return SAT-style analysis")
-async def chat_search_wine(request: MCPRequest, session: AsyncSession = Depends(get_async_session)):
+@router.post("/analyze-wine", summary="Search wine info using LLM and return SAT-style analysis")
+async def analyze_wine(request: WineMCPRequest, session: AsyncSession = Depends(get_async_session)):
     env = os.getenv("ENV", "prod")
     use_mock = request.context.model_dump().get("use_mock", False)
     
