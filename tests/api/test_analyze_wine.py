@@ -4,7 +4,7 @@ from app.main import app
 
 client = TestClient(app)
 
-def test_chat_search_wine_mock():
+def test_analyze_wine_mock():
     os.environ["ENV"] = "dev"
 
     payload = {
@@ -19,7 +19,7 @@ def test_chat_search_wine_mock():
         }
     }
 
-    response = client.post("/api/chat-search-wine", json=payload)
+    response = client.post("/api/analyze-wine", json=payload)
 
     assert response.status_code == 200
     data = response.json()

@@ -1,10 +1,11 @@
 from app.db.crud.wine_summary import get_wine_summary_by_name, save_wine_summary
-from app.models.mcp_model import MCPOutput
+from app.models.mcp_model import WineMCPOutput
 from app.services.llm.gemini_engine import parse_wine_query_with_gemini
 from app.services.llm.search_and_summarize import summarize_wine_info
 from app.services.rules.sat_analyzer import analyze_wine_profile
 from app.utils.mock import generate_mock_summary
 from app.utils.normalize import to_title_case_wine_name
+from pydantic import ValidationError
 import json
 import logging
 import time
@@ -53,13 +54,13 @@ async def handle_mock_response(request):
         "context": request.context.model_dump()
     }
 
-async def handle_db_response(session, wine_name, request):
+async def handle_cached_wine_summary(session, wine_name, request):
     existing = await get_wine_summary_by_name(session, wine_name)
     if existing:
         return {
             "status": "analyzed",
             "input": request.input,
-            "output": MCPOutput(**existing.to_dict()),
+            "output": WineMCPOutput(**existing.to_dict()),
             "context": request.context.model_dump()
         }
     return None
@@ -121,6 +122,6 @@ async def handle_fresh_summary(session, wine_name, query, request):
     return {
         "status": "analyzed",
         "input": request.input,
-        "output": MCPOutput(**summary_cleaned),
+        "output": WineMCPOutput(**summary_cleaned),
         "context": request.context.model_dump() # Ensure dict for JSON serialization
     }

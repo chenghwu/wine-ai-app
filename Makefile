@@ -4,8 +4,8 @@ PYTHON := $(VENV_DIR)/bin/python
 PIP := $(VENV_DIR)/bin/pip
 
 # Set project metadata variables
-PROJECT_ID = gen-lang-client-0149363960
-REGION = us-west1
+PROJECT_ID = wine-intelligence
+REGION = us-central1
 REPO = wine-ai-app
 IMAGE_NAME = wine-api
 TAG = latest
