@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { FoodPairingResponse, FoodPairingCategory } from '@/types/FoodPairingResponse'
 import FoodPairingCategoryIcons from '@/components/FoodPairingCategoryIcons'
 import FoodPairingModal from '@/components/FoodPairing/FoodPairingModal'
@@ -29,7 +29,7 @@ export function FoodPairingSection({ wineName }: Props) {
       } else {
         setError(json.error || 'Unknown error')
       }
-    } catch (err) {
+    } catch {
       setError('Failed to fetch food pairings.')
     } finally {
       setLoading(false)
