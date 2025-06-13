@@ -39,13 +39,17 @@ class WineMCPRequest(BaseModel):
     output: Optional[WineMCPOutput] = None
     context: MCPContext
 
-class FoodPairingItem(BaseModel):
+class FoodPairingExample(BaseModel):
     food: str
     reason: str
 
+class FoodPairingCategory(BaseModel):
+    category: str
+    examples: List[FoodPairingExample]
+
 class FoodPairingMCPOutput(BaseModel):
-    wine_name: str
-    pairings: List[FoodPairingItem]
+    wine: str
+    pairings: List[FoodPairingCategory]
     reference_source: Optional[List[str]] = None
 
 class FoodPairingMCPRequest(BaseModel):

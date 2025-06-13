@@ -7,9 +7,11 @@ from app.db.session import get_async_session
 from app.exceptions import GoogleSearchApiError, GeminiApiError
 from app.models.mcp_model import WineMCPRequest
 from app.services.handlers.wine_summary_handler import (
-    handle_wine_analysis_query, handle_mock_response, handle_db_response, handle_fresh_summary
+    handle_wine_analysis_query, handle_mock_response, handle_cached_wine_summary, handle_fresh_summary
 )
-from app.services.handlers.food_pairing_handler import handle_food_pairing
+from app.services.handlers.food_pairing_handler import (
+    handle_cached_pairings, handle_food_pairing
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -32,7 +34,7 @@ async def analyze_wine(request: WineMCPRequest, session: AsyncSession = Depends(
         original_query = parsed["original_query"]
 
         # Check if summary already exists in DB
-        cached = await handle_db_response(session, wine_name, request)
+        cached = await handle_cached_wine_summary(session, wine_name, request)
         if cached:
             logger.info(f"Found existing summary in DB.")
             return cached
@@ -61,7 +63,20 @@ async def analyze_wine(request: WineMCPRequest, session: AsyncSession = Depends(
 
 @router.get("/pair-food", summary="Recommend food pairings for a wine")
 async def pair_food(wine_name: str, session: AsyncSession = Depends(get_async_session)):
-    return await handle_food_pairing(session, wine_name)
+    try:
+        cached, wine = await handle_cached_pairings(session, wine_name)
+        if cached:
+            logger.info(f"Found existing pairing for '{wine_name}'")
+            return cached
+
+        return await handle_food_pairing(session, wine_name)
+    
+    except Exception as e:
+        logger.exception("Failed to process food pairing request.")
+        return {
+            "status": "error",
+            "error": "Something went wrong while generating food pairing. Please try again later."
+        }
 
 @router.get("/wines", summary="Get all stored wine summaries")
 async def list_all_wines(session: AsyncSession = Depends(get_async_session)):

@@ -15,4 +15,4 @@ async def save_wine_summary(session: AsyncSession, data: dict):
 
 async def get_all_wine_summaries(session: AsyncSession) -> list[WineSummary]:
     result = await session.execute(select(WineSummary))
-    return result.scalars().all()
+    return result.unique().scalars().all()

@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Integer, Text, DateTime, func
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
 from app.db.models import Base
 
 class WineSummary(Base):
@@ -19,8 +20,14 @@ class WineSummary(Base):
     analysis = Column(Text)
     sat = Column(JSONB, nullable=True)
     reference_source = Column(JSONB, nullable=True)
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    food_pairing_categories = relationship(
+        "FoodPairingCategory",
+        back_populates="wine_summary",
+        cascade="all, delete",
+        lazy="joined"  # or "selectin" if preferred
+    )
 
     def to_dict(self):
         return {
