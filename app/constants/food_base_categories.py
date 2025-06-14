@@ -12,9 +12,9 @@ FOOD_BASE_CATEGORIES = {
         "slow-cooked lamb tagine"
     ],
     "Game": [
-        "venison loin with blackberry reduction", "roast wild boar", "pheasant with root vegetables",
-        "rabbit ragu", "quail with truffle mash", "elk steak", "pan-seared duck breast",
-        "hare stew", "roasted partridge", "goose confit", "grilled wild duck",
+        "game", "game meat", "venison loin with blackberry reduction", "roast wild boar", 
+        "pheasant with root vegetables", "rabbit ragu", "quail with truffle mash", "elk steak", 
+        "pan-seared duck breast", "hare stew", "roasted partridge", "goose confit", "grilled wild duck",
         "foie gras", "foie gras terrine", "seared foie gras", "torchon of foie gras"
     ],
     "Poultry": [
@@ -45,7 +45,7 @@ FOOD_BASE_CATEGORIES = {
     "Grains & Pasta": [
         "creamy mushroom risotto", "tagliatelle bolognese", "quinoa salad", "spaghetti carbonara",
         "barley risotto", "couscous with lamb", "fettuccine alfredo", "polenta with cheese",
-        "orzo with herbs", "rice pilaf"
+        "orzo with herbs", "rice pilaf", "creamy pasta dishes"
     ],
     "Bread & Pastry": [
         "crusty sourdough", "flaky croissant", "buttery brioche bun", "flatbread with toppings",
