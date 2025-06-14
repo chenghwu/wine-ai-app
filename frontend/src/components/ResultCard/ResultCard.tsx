@@ -3,6 +3,7 @@
 import { InfoItem } from './InfoItem'
 import { SATSection } from './SATSection'
 import { ReferenceSources } from './ReferenceSources'
+import { FoodPairingSection } from './FoodPairingSection'
 import { WineAnalysisResponse } from '@/types/WineAnalysisResponse'
 
 interface ResultCardProps {
@@ -29,6 +30,7 @@ export function ResultCard({ response }: ResultCardProps) {
         <InfoItem label="Analysis" value={response.analysis} />
 
         {response.sat && <SATSection sat={response.sat} />}
+        <FoodPairingSection wineName={response.wine} />
         <ReferenceSources sources={response.reference_source} />
       </ul>
     </div>

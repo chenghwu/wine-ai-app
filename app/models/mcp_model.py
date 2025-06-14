@@ -19,7 +19,7 @@ class SATResult(BaseModel):
     clusters: Optional[List[str]] = None
     descriptors: Optional[List[str]] = None
 
-class MCPOutput(BaseModel):
+class WineMCPOutput(BaseModel):
     wine: str
     region: str
     grape_varieties: str
@@ -34,7 +34,26 @@ class MCPOutput(BaseModel):
     reference_source: List[str]
 
 # Define the main request schema used in your FastAPI endpoint /analyze
-class MCPRequest(BaseModel):
+class WineMCPRequest(BaseModel):
     input: Dict[str, Any] = Field(..., json_schema_extra={"example": {"query": "Opus One 2015"}})
-    output: Optional[MCPOutput] = None
+    output: Optional[WineMCPOutput] = None
+    context: MCPContext
+
+class FoodPairingExample(BaseModel):
+    food: str
+    reason: str
+
+class FoodPairingCategory(BaseModel):
+    category: str
+    base_category: str
+    examples: List[FoodPairingExample]
+
+class FoodPairingMCPOutput(BaseModel):
+    wine: str
+    pairings: List[FoodPairingCategory]
+    reference_source: Optional[List[str]] = None
+
+class FoodPairingMCPRequest(BaseModel):
+    input: Dict[str, Any] = Field(..., json_schema_extra={"example": {"wine_name": "Barolo 2016"}})
+    output: Optional[FoodPairingMCPOutput] = None
     context: MCPContext

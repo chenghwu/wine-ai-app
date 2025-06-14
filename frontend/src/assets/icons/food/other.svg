@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" id="fork-and-spoon" fill="none" stroke="currentColor">
+  <line x1="46.13" x2="46.13" y1="24.75" y2="33" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path stroke-miterlimit="10" stroke-width="3" d="M42.11,6.4a5,5,0,0,1,8,0c2,2.75,4,6.38,4,10a8,8,0,1,1-16,0C38.13,12.78,40.12,9.15,42.11,6.4Z"/>
+  <rect width="6" height="26.72" x="43.13" y="33" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" rx="3"/>
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M23.87,4.28V19.2a5.55,5.55,0,0,1-5.55,5.55h-2.9A5.55,5.55,0,0,1,9.87,19.2V4.28"/>
+  <line x1="16.87" x2="16.87" y1="17" y2="4.28" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <line x1="16.87" x2="16.87" y1="33" y2="24.75" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <rect width="6" height="26.72" x="13.87" y="33" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" rx="3"/>
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9.87,17h14v2.2a5.55,5.55,0,0,1-5.55,5.55h-2.9A5.55,5.55,0,0,1,9.87,19.2V17Z"/>
+</svg>

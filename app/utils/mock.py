@@ -1,6 +1,6 @@
-from app.models.mcp_model import MCPOutput
+from app.models.mcp_model import WineMCPOutput
 
-def generate_mock_summary() -> MCPOutput:
+def generate_mock_summary() -> WineMCPOutput:
     mock_data = {
         "wine": "Mock Wine 2018",
         "region": "Mock Region",
@@ -28,4 +28,4 @@ def generate_mock_summary() -> MCPOutput:
         },
         "reference_source": ["Mock: winespectator.com"]
     }
-    return MCPOutput(**mock_data)
+    return WineMCPOutput(**mock_data)

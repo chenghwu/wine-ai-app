@@ -1,6 +1,5 @@
 from sentence_transformers import SentenceTransformer, util
 from app.config import EMBEDDING_MODEL_NAME, LONG_FINISH_PHRASES, LONG_FINISH_SIM_THRESHOLD
-from app.utils.aroma_lexicon import aroma_lexicon
 from app.utils.post_llm_process import clean_aroma_clusters
 import logging
 import re

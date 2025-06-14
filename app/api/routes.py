@@ -5,17 +5,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.crud.wine_summary import get_all_wine_summaries
 from app.db.session import get_async_session
 from app.exceptions import GoogleSearchApiError, GeminiApiError
-from app.models.mcp_model import MCPRequest
+from app.models.mcp_model import WineMCPRequest
 from app.services.handlers.wine_summary_handler import (
-    handle_wine_analysis_query, handle_mock_response, handle_db_response, handle_fresh_summary
+    handle_wine_analysis_query, handle_mock_response, handle_cached_wine_summary, handle_fresh_summary
+)
+from app.services.handlers.food_pairing_handler import (
+    handle_cached_pairings, handle_food_pairing
 )
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 # Extract user query, use Google Programmable Search Engine and Gemini to search and aggregate info
-@router.post("/chat-search-wine", summary="Search wine info using LLM and return SAT-style analysis")
-async def chat_search_wine(request: MCPRequest, session: AsyncSession = Depends(get_async_session)):
+@router.post("/analyze-wine", summary="Search wine info using LLM and return SAT-style analysis")
+async def analyze_wine(request: WineMCPRequest, session: AsyncSession = Depends(get_async_session)):
     env = os.getenv("ENV", "prod")
     use_mock = request.context.model_dump().get("use_mock", False)
     
@@ -31,7 +34,7 @@ async def chat_search_wine(request: MCPRequest, session: AsyncSession = Depends(
         original_query = parsed["original_query"]
 
         # Check if summary already exists in DB
-        cached = await handle_db_response(session, wine_name, request)
+        cached = await handle_cached_wine_summary(session, wine_name, request)
         if cached:
             logger.info(f"Found existing summary in DB.")
             return cached
@@ -56,6 +59,23 @@ async def chat_search_wine(request: MCPRequest, session: AsyncSession = Depends(
         return {
             "status": "error",
             "error": "Something went wrong while analyzing the wine. Please try again later."
+        }
+
+@router.get("/pair-food", summary="Recommend food pairings for a wine")
+async def pair_food(wine_name: str, session: AsyncSession = Depends(get_async_session)):
+    try:
+        cached, wine = await handle_cached_pairings(session, wine_name)
+        if cached:
+            logger.info(f"Found existing pairing for '{wine_name}'")
+            return cached
+
+        return await handle_food_pairing(session, wine_name)
+    
+    except Exception as e:
+        logger.exception("Failed to process food pairing request.")
+        return {
+            "status": "error",
+            "error": "Something went wrong while generating food pairing. Please try again later."
         }
 
 @router.get("/wines", summary="Get all stored wine summaries")
