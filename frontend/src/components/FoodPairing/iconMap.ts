@@ -6,6 +6,7 @@ import GameIcon from "@/assets/icons/food/game.svg";
 import PoultryIcon from "@/assets/icons/food/poultry.svg";
 import FishIcon from "@/assets/icons/food/fish.svg";
 import ShellfishIcon from "@/assets/icons/food/shellfish.svg";
+import SeafoodIcon from "@/assets/icons/food/seafood.svg";
 import VegetablesIcon from "@/assets/icons/food/vegetables.svg";
 import CheeseIcon from "@/assets/icons/food/cheese.svg";
 import GrainsIcon from "@/assets/icons/food/grains.svg";
@@ -26,6 +27,7 @@ export const foodIconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>
   Poultry: PoultryIcon,
   Fish: FishIcon,
   Shellfish: ShellfishIcon,
+  Seafood: SeafoodIcon,
   Vegetables: VegetablesIcon,
   Cheese: CheeseIcon,
   "Grains & Pasta": GrainsIcon,
