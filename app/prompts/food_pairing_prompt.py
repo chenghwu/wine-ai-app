@@ -8,7 +8,7 @@ Below is a wine's detailed tasting profile (based on WSET-style evaluation):
 Your task:
 - Identify 3 to 5 high-level food categories that pair well with this wine.
 - For each category:
-  - Give a clear category name (e.g., "Lamb", "Beef", "Hard cheese", "White fish", "Mushrooms").
+  - Give a clear category name (e.g., "Lamb", "Beef", "Hard cheese", "White fish", "Mushrooms", "Asparagus", etc.).
   - Provide 2 specific example dishes that match this wine.
   - Explain briefly why each dish is a good pairing (1–2 sentences).
 

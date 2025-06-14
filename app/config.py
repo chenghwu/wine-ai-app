@@ -107,6 +107,6 @@ SHORT_TERM_REFERENCES = [
 ]
 
 LONG_FINISH_PHRASES = [
-    "long finish", "lingering finish", "persistent finish",
+    "long finish", "lingering finish", "persistent finish", "long length finish",
     "long-lasting finish", "lengthy finish", "extended finish"
 ]

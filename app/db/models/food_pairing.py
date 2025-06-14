@@ -8,6 +8,7 @@ class FoodPairingCategory(Base):
     id = Column(Integer, primary_key=True, index=True)
     wine_id = Column(Integer, ForeignKey("wine_summaries.id", ondelete="CASCADE"), nullable=False)
     category = Column(String(100), nullable=False)
+    base_category = Column(String(50), nullable=False, default="Other")
 
     wine_summary = relationship("WineSummary", back_populates="food_pairing_categories")
     examples = relationship("FoodPairingExample", back_populates="category", cascade="all, delete")
@@ -16,6 +17,7 @@ class FoodPairingCategory(Base):
         return {
             "wine": self.wine_summary.wine,
             "category": self.category,
+            "base_category": self.base_category,
             "examples": [example.to_dict() for example in self.examples]
         }
 

@@ -5,6 +5,7 @@ export interface FoodPairingExample {
   
   export interface FoodPairingCategory {
     category: string
+    base_category: string
     examples: FoodPairingExample[]
   }
   

@@ -1,7 +1,7 @@
 ''' 
 Full WSET Level 4 clusters and descriptors
 '''
-aroma_lexicon = {
+AROMA_LEXICONS = {
     "Floral": ["acacia", "honeysuckle", "chamomile", "elderflower", "geranium", "blossom", "rose", "violet", "jasmin"],
     "Green fruit": ["apple", "pear", "pear drop", "quince", "gooseberry", "grape"],
     "Citrus fruit": ["grapefruit", "lemon", "lime", "orange", "orange peel", "lemon peel", "yuzu", "bergamot"],
@@ -25,4 +25,4 @@ aroma_lexicon = {
 }
 
 if __name__ == "__main__":
-    print(aroma_lexicon.keys())
+    print(AROMA_LEXICONS.keys())
