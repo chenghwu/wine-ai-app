@@ -29,6 +29,10 @@ FOOD_BASE_CATEGORIES = {
         "lobster thermidor", "garlic butter shrimp", "steamed mussels", "crab cakes",
         "grilled scallops", "clam chowder", "fried oysters", "prawn curry"
     ],
+    "Seafood": [
+        "seafood", "seafood paella", "cioppino", "seafood risotto", "baked seafood casserole",
+        "bouillabaisse", "seafood ramen", "seafood pasta", "tempura seafood platter"
+    ],
     "Vegetables": [
         "grilled asparagus", "stuffed bell peppers", "roasted beetroot salad", "sautéed spinach",
         "eggplant parmesan", "mushroom risotto", "zucchini noodles", "steamed broccoli"
