@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 117.89 140" id="orange">
+  <g>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"
+      d="M3.59 86.42A49.7 49.7 0 012 73.88C2 48.15 21.38 27.3 45.29 27.3A42 42 0 0177.88 43.2s5.05 6.39 5.94 13.66M41 34.69s-2.78-19-15.89-19.78M65.66 3.4s5 20.71-23.18 17.29C38.17 9 53.08-2 65.66 3.4zM66 80.47l36.47-21.38a49.55 49.55 0 010 42.76zM62.61 86.42L99.07 107.8a48.16 48.16 0 01-36.46 21.37zM55.85 129.17A48.18 48.18 0 0119.38 107.8L55.85 86.42z"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"
+      d="M115.89,80.47c0,31.77-25.37,57.53-56.67,57.53A56.6,56.6,0,0,1,8.34,105.81L106.92,49.4A57.84,57.84,0,0,1,115.89,80.47Z"/>
+    <line x1="106.92" x2="8.34" y1="49.4" y2="105.81" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  </g>
+</svg>

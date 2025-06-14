@@ -37,20 +37,23 @@ export function FoodPairingSection({ wineName }: Props) {
   }
 
   return (
-    <div className="mt-5 border-t boder-zinc-700 pt-4">
+    <div className="mt-5 border-t border-zinc-700 pt-4">
       <h3 className="text-white text-lg font-semibold mb-2">Food Pairing Recommendations</h3>
 
       {!data ? (
         <>
-          <Button onClick={fetchFoodPairings} disabled={loading}>
-            {loading ? 'Loading...' : 'Show Food Pairing Recommendations'}
+          <Button className="bg-emerald-800 text-white hover:bg-emerald-900" onClick={fetchFoodPairings} disabled={loading}>
+            {loading ? 'Loading...' : 'Click to show'}
           </Button>
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </>
       ) : (
         <>
           <FoodPairingCategoryIcons
-            categories={data.pairings.map((c) => c.category)}
+            categories={data.pairings.map((c) => ({
+                label: c.category,
+                iconKey: c.base_category,
+            }))}
             onCategoryClick={(category) => {
               const found = data.pairings.find((c) => c.category === category)
               if (found) {

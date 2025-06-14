@@ -1,8 +1,9 @@
 from app.db.crud.wine_summary import get_wine_summary_by_name
-from app.db.crud.food_pairing import save_food_pairings
+from app.db.crud.food_pairing import save_food_pairings, get_wine_and_pairings
 from app.db.models import WineSummary
 from app.models.mcp_model import FoodPairingMCPOutput, FoodPairingCategory
 from app.prompts.food_pairing_prompt import generate_food_pairing_prompt
+from app.services.embedding.food_classifier import find_base_category
 from app.services.llm.gemini_engine import call_gemini_sync_with_retry
 from app.utils.llm_parsing import parse_json_from_text
 from pydantic import ValidationError
@@ -12,16 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 async def handle_cached_pairings(session, wine_name: str) -> tuple[dict | None, object | None]:
-    from app.db.models import FoodPairingCategory as DBFoodPairingCategory, WineSummary
-    from sqlalchemy import select
-    from sqlalchemy.orm import selectinload
-
-    result = await session.execute(
-        select(WineSummary)
-        .options(selectinload(WineSummary.food_pairing_categories).selectinload(DBFoodPairingCategory.examples))
-        .where(WineSummary.wine.ilike(wine_name))
-    )
-    wine = result.scalar_one_or_none()
+    wine, categories = await get_wine_and_pairings(session, wine_name)
 
     if wine and wine.food_pairing_categories:
         return {
@@ -29,7 +21,7 @@ async def handle_cached_pairings(session, wine_name: str) -> tuple[dict | None, 
             "input": {"wine_name": wine_name},
             "output": FoodPairingMCPOutput(
                 wine=wine_name,
-                pairings=[cat.to_dict() for cat in wine.food_pairing_categories]
+                pairings=[cat.to_dict() for cat in categories]
             )
         }, wine
 
@@ -61,6 +53,13 @@ async def handle_food_pairing(session, wine_name: str, wine: Optional[WineSummar
             "error": f"Failed to generate pairing for {wine_name}. Please try again later."
         }
     
+    # Safely enrich each group with a base_category before validation
+    for group in parsed:
+        if isinstance(group, dict) and "category" in group:
+            group["base_category"] = find_base_category(group["category"])
+        else:
+            logger.warning(f"Skipping invalid group format (missing 'category'): {group}")
+
     # Validate result format from Gemini
     try:
         validated_pairings = [FoodPairingCategory.parse_obj(p) for p in parsed]

@@ -4,11 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 from app.db.session import async_session
 from app.db.models.wine_summary import WineSummary
-from app.utils.aroma_lexicon import aroma_lexicon
+from app.constants.aroma_lexicons import AROMA_LEXICONS
 
 def rebuild_aroma_from_descriptors(descriptors: list[str]) -> dict[str, list[str]]:
     aroma = {}
-    for cluster, keywords in aroma_lexicon.items():
+    for cluster, keywords in AROMA_LEXICONS.items():
         matches = [d for d in descriptors if d in keywords]
         if matches:
             aroma[cluster] = sorted(set(matches))

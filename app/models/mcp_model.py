@@ -45,6 +45,7 @@ class FoodPairingExample(BaseModel):
 
 class FoodPairingCategory(BaseModel):
     category: str
+    base_category: str
     examples: List[FoodPairingExample]
 
 class FoodPairingMCPOutput(BaseModel):
