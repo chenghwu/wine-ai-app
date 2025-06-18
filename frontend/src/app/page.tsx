@@ -53,7 +53,7 @@ export default function WineChatPage() {
         body: JSON.stringify({
           input: { query },
           context: {
-            model: 'gemini-2.0-flash',
+            model: process.env.NEXT_PUBLIC_GEMINI_MODEL,
             user_id: 'demo-user',
             timestamp: new Date().toISOString(),
             ruleset: 'WSET Level 4 SAT',

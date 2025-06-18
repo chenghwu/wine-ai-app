@@ -2,7 +2,6 @@ import google.generativeai as genai
 import logging
 import os
 import time
-from dotenv import load_dotenv
 from app.exceptions import GeminiApiError
 from app.constants.aroma_lexicons import AROMA_LEXICONS
 from app.utils.env import setup_gemini_env
