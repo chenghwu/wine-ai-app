@@ -59,7 +59,7 @@ docker-run:
 	docker run -d -p 8080:8080 --env-file .env.local wine-ai-app
 
 docker-compose-up:
-	docker-compose --env-file .env.local up --build -d
+	docker compose --env-file .env.local up --build -d
 
 # Build image for Google Cloud Run (linux/amd64)
 docker-build-cloudrun:
@@ -78,7 +78,7 @@ gcloud-build:
 
 docker-start:
 	@echo "Starting all Docker services without rebuilding..."
-	docker-compose --env-file .env.local up -d
+	docker compose --env-file .env.local up -d
 
 docker-stop:
 	@echo "Stopping all Docker services..."
