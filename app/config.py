@@ -3,6 +3,11 @@
 # Enable detailed logging for development
 import os
 
+# K_SERVICE is an environment variable automatically set in Cloud Run
+if os.getenv("K_SERVICE") is None:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=".env.local")
+
 ENV = os.getenv("ENV", "prod")
 DEBUG_LOG = ENV == "dev"
 
