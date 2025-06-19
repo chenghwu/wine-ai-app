@@ -10,7 +10,7 @@ def test_analyze_wine_mock():
     payload = {
         "input": {"query": "Opus One 2015"},
         "context": {
-            "model": "gemini-2.0-flash",
+            "model": "gemini-2.5-flash",
             "user_id": "test-user",
             "timestamp": "2025-04-25T00:00:00",
             "ruleset": "WSET Level 4 SAT",

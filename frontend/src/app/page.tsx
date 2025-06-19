@@ -53,7 +53,7 @@ export default function WineChatPage() {
         body: JSON.stringify({
           input: { query },
           context: {
-            model: 'gemini-2.0-flash',
+            model: process.env.NEXT_PUBLIC_GEMINI_MODEL,
             user_id: 'demo-user',
             timestamp: new Date().toISOString(),
             ruleset: 'WSET Level 4 SAT',
@@ -88,7 +88,7 @@ export default function WineChatPage() {
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Main content */}
-      <main className="flex-grow flex flex-col items-center justify-center px-3 py-8 gap-2 pb-10">
+      <main className="flex-grow flex flex-col items-center justify-center py-8 gap-2 pb-10">
         <h1 className="text-3xl font-bold text-center">
           Wine Intelligence{' '}
           {version && (

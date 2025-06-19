@@ -3,8 +3,21 @@
 # Enable detailed logging for development
 import os
 
+# K_SERVICE is an environment variable automatically set in Cloud Run
+if os.getenv("K_SERVICE") is None:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=".env.local")
+
 ENV = os.getenv("ENV", "prod")
 DEBUG_LOG = ENV == "dev"
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_CX = os.getenv("GOOGLE_CX")
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 ACCEPTED_LANGUAGES = {"en", "fr", "it", "es"}
 

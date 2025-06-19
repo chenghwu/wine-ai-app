@@ -132,6 +132,7 @@ jobs:
         working-directory: frontend
         env:
           NEXT_PUBLIC_API_URL: "/api"
+          NEXT_PUBLIC_GEMINI_MODEL: "gemini-2.5-flash"
           NEXT_PUBLIC_SHOW_MOCK_TOGGLE: "false"
           NEXT_PUBLIC_USE_MOCK: "false"
 
