@@ -17,7 +17,10 @@ logger = logging.getLogger(__name__)
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 MAX_CONCURRENT_FETCHES = int(os.getenv("MAX_CONCURRENT_FETCHES", 5))
-MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2MB
+MAX_CONTENT_LENGTH = 1024 * 1024  # 1MB
+
+# HTTP client configuration for better performance
+HTTP_CLIENT_LIMITS = httpx.Limits(max_keepalive_connections=20, max_connections=50)
 
 # Helper: Extract and clean fallback text from full page soup
 def extract_fallback_text(soup: BeautifulSoup, url: str) -> str:
@@ -50,45 +53,40 @@ def extract_clean_text_block(
     log_skipped("No sufficient content in main tags", url)
     return extract_fallback_text(soup, url)
 
-# The main crawling function
-async def fetch_full_text_from_url_async(url: str) -> str:
+# The main crawling function - now accepts client parameter
+async def fetch_full_text_from_url_async(client: httpx.AsyncClient, url: str) -> str:
     if url.lower().endswith(".pdf"):
         log_skipped("PDF file not supported", url)
         return ""
 
     # GET request for actual content
     try:
-        async with httpx.AsyncClient(
-            timeout=httpx.Timeout(10.0, connect=3.0),
-            headers={"User-Agent": USER_AGENT},
-            follow_redirects=True
-        ) as client:
-            response = await client.get(url)
-            response.raise_for_status()
+        response = await client.get(url)
+        response.raise_for_status()
 
-            headers = response.headers
-            content_type = headers.get("content-type", "").lower()
-            if not content_type.startswith(("text/html", "text/plain", "application/xhtml+xml", "application/xml")):
-                log_skipped(f"Non-HTML content: {content_type}", url)
-                return ""
+        headers = response.headers
+        content_type = headers.get("content-type", "").lower()
+        if not content_type.startswith(("text/html", "text/plain", "application/xhtml+xml", "application/xml")):
+            log_skipped(f"Non-HTML content: {content_type}", url)
+            return ""
 
-            content_length_str = headers.get("content-length")
-            if content_length_str:
-                try:
-                    content_length = int(content_length_str)
-                    if content_length > MAX_CONTENT_LENGTH:
-                        log_skipped(f"Content too large: {content_length}", url)
-                        return ""
-                except ValueError:
-                    logger.warning(f"Invalid content-length: {content_length_str} from GET for {url}")
+        content_length_str = headers.get("content-length")
+        if content_length_str:
+            try:
+                content_length = int(content_length_str)
+                if content_length > MAX_CONTENT_LENGTH:
+                    log_skipped(f"Content too large: {content_length}", url)
+                    return ""
+            except ValueError:
+                logger.warning(f"Invalid content-length: {content_length_str} from GET for {url}")
 
-            raw_html = response.text
-            if "<html" not in raw_html.lower() or len(raw_html) < 300:
-                log_skipped("Too short or invalid HTML", url)
-                return ""
+        raw_html = response.text
+        if "<html" not in raw_html.lower() or len(raw_html) < 300:
+            log_skipped("Too short or invalid HTML", url)
+            return ""
 
-            soup = BeautifulSoup(raw_html, "html.parser")
-            return extract_clean_text_block(soup, url)
+        soup = BeautifulSoup(raw_html, "html.parser")
+        return extract_clean_text_block(soup, url)
 
     except httpx.TimeoutException:
         logger.warning(f"[TIMEOUT] GET request timed out: {url}")
@@ -104,32 +102,56 @@ async def aggregate_page_content_async(
     search_links: list[str],
     wine_name: str,
     max_concurrent: int = MAX_CONCURRENT_FETCHES,
-    slow_threshold: float = 5.0  # seconds
+    slow_threshold: float = 5.0,  # seconds
+    total_timeout: float = 20.0  # total timeout for all fetches
 ) -> str:
     logger.info(f"[SETUP] Using max_concurrent={max_concurrent} for fetching.")
     sem = asyncio.Semaphore(max_concurrent)  # limits concurrent fetches
-
-    async def get_text(url: str) -> tuple[str, str]:
-        async with sem:
-            try:
-                start = time.perf_counter()
-                async def fetch():
-                    return await fetch_full_text_from_url_async(url)
-
-                raw_text, final_url = await get_relevant_text_and_cache("html", wine_name, url, fetch)
-                duration = time.perf_counter() - start
-                status = "SLOW" if duration > slow_threshold else "OK"
-                logger.info(f"[FETCHED-{status}] {final_url} in {duration:.2f}s")
-
-                return raw_text, final_url
-            except Exception as e:
-                logger.error(f"Failed to fetch or cache {url}: {e}")
-                return "", url
-
-    # Concurrently fetch all text
-    tasks = [get_text(url) for url in search_links]
-    raw_results = await asyncio.gather(*tasks, return_exceptions=False)
-    #raw_results = await gather_in_chunks(tasks, max_concurrent)
+    
+    # Create single HTTP client for all requests
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(6.0, connect=2.0),
+        headers={"User-Agent": USER_AGENT},
+        follow_redirects=True,
+        limits=HTTP_CLIENT_LIMITS
+    ) as client:
+        async def get_text(url: str) -> tuple[str, str]:
+            async with sem:
+                try:
+                    start = time.perf_counter()
+                    
+                    async def fetch():
+                        return await fetch_full_text_from_url_async(client, url)
+                    
+                    # Add individual URL timeout
+                    raw_text, final_url = await asyncio.wait_for(
+                        get_relevant_text_and_cache("html", wine_name, url, fetch),
+                        timeout=6.0
+                    )
+                    
+                    duration = time.perf_counter() - start
+                    status = "SLOW" if duration > slow_threshold else "OK"
+                    logger.info(f"[FETCHED-{status}] {final_url} in {duration:.2f}s")
+                    
+                    return raw_text, final_url
+                except asyncio.TimeoutError:
+                    logger.warning(f"Timeout fetching {url}")
+                    return "", url
+                except Exception as e:
+                    logger.error(f"Failed to fetch or cache {url}: {e}")
+                    return "", url
+        
+        # Concurrently fetch all text with total timeout
+        tasks = [get_text(url) for url in search_links]
+        try:
+            raw_results = await asyncio.wait_for(
+                asyncio.gather(*tasks, return_exceptions=True),
+                timeout=total_timeout
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"Total aggregation timeout ({total_timeout}s) reached")
+            # Return empty result on total timeout
+            return {"error": "Content aggregation timed out."}
 
     pairs = [result for result in raw_results if result is not None]
     if not pairs:

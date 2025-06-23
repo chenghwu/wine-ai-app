@@ -26,7 +26,7 @@ TRUSTED_DOMAINS = [
 
 def google_search_links_with_retry(
     wine_name: str,
-    max_results: int = 20,
+    max_results: int = 12,
     max_retries: int = 5,
     delay_seconds: float = 2.0
 ) -> list[str]:
