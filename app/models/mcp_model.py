@@ -57,3 +57,20 @@ class FoodPairingMCPRequest(BaseModel):
     input: Dict[str, Any] = Field(..., json_schema_extra={"example": {"wine_name": "Barolo 2016"}})
     output: Optional[FoodPairingMCPOutput] = None
     context: MCPContext
+
+class ImageAnalysisResult(BaseModel):
+    wine_name: str
+    winery: str
+    vintage: Optional[str] = None
+    region: str
+    grape_varieties: str
+    alcohol_content: Optional[str] = None
+    wine_type: str
+    additional_info: str
+    confidence: float
+    extracted_text: str
+    image_metadata: Optional[Dict[str, Any]] = None
+    analysis_method: str
+
+class WineImageMCPRequest(BaseModel):
+    context: MCPContext
