@@ -1,17 +1,18 @@
 import os, logging
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Form
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.crud.wine_summary import get_all_wine_summaries
 from app.db.session import get_async_session
 from app.exceptions import GoogleSearchApiError, GeminiApiError
-from app.models.mcp_model import WineMCPRequest
+from app.models.mcp_model import WineMCPRequest, WineImageMCPRequest
 from app.services.handlers.wine_summary_handler import (
     handle_wine_analysis_query, handle_mock_response, handle_cached_wine_summary, handle_fresh_summary
 )
 from app.services.handlers.food_pairing_handler import (
     handle_cached_pairings, handle_food_pairing
 )
+from app.services.handlers.image_analysis_handler import handle_image_analysis
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -59,6 +60,41 @@ async def analyze_wine(request: WineMCPRequest, session: AsyncSession = Depends(
         return {
             "status": "error",
             "error": "Something went wrong while analyzing the wine. Please try again later."
+        }
+
+@router.post("/analyze-wine-image", summary="Analyze wine from uploaded image")
+async def analyze_wine_image(
+    file: UploadFile = File(...),
+    context: str = Form(...),  # JSON string of MCPContext
+    session: AsyncSession = Depends(get_async_session)
+):
+    """
+    Analyze wine from uploaded image using Gemini Vision API.
+    """
+    try:
+        # Parse context from form data
+        import json
+        from app.models.mcp_model import MCPContext
+        
+        context_data = json.loads(context)
+        mcp_context = MCPContext(**context_data)
+        
+        # Create request object
+        request = WineImageMCPRequest(context=mcp_context)
+        
+        # Process the image
+        return await handle_image_analysis(file, request, session)
+        
+    except json.JSONDecodeError:
+        return {
+            "status": "error",
+            "error": "Invalid context data format"
+        }
+    except Exception as e:
+        logger.exception("Image analysis endpoint failed")
+        return {
+            "status": "error",
+            "error": f"Failed to process image: {str(e)}"
         }
 
 @router.get("/pair-food", summary="Recommend food pairings for a wine")

@@ -1,13 +1,16 @@
 'use client'
 
+import { Camera } from 'lucide-react'
+
 interface Props {
   value: string
   onChange: (value: string) => void
   onSubmit: () => void
+  onCameraClick: () => void
   loading: boolean
 }
 
-export function SearchInputWithButton({ value, onChange, onSubmit, loading }: Props) {
+export function SearchInputWithButton({ value, onChange, onSubmit, onCameraClick, loading }: Props) {
   return (
     <div className="relative w-full">
       <input
@@ -15,15 +18,25 @@ export function SearchInputWithButton({ value, onChange, onSubmit, loading }: Pr
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="e.g. Opus One 2015"
-        className="w-full px-4 py-2 pr-24 rounded-lg bg-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-rose-800"
+        className="w-full px-4 py-2 pr-28 rounded-lg bg-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-rose-800"
       />
-      <button
-        onClick={onSubmit}
-        disabled={loading}
-        className="absolute right-1 top-1 bottom-1 px-4 rounded-lg bg-rose-800 hover:bg-rose-900 text-sm font-semibold disabled:opacity-50"
-      >
-        {loading ? 'Analyzing...' : 'Analyze'}
-      </button>
+      <div className="absolute right-1 top-1 bottom-1 flex gap-1">
+        <button
+          onClick={onCameraClick}
+          disabled={loading}
+          className="px-2 rounded-lg bg-zinc-600 hover:bg-zinc-700 text-zinc-300 disabled:opacity-50 flex items-center justify-center"
+          title="Take photo of wine label"
+        >
+          <Camera size={18} />
+        </button>
+        <button
+          onClick={onSubmit}
+          disabled={loading}
+          className="px-4 rounded-lg bg-rose-800 hover:bg-rose-900 text-sm font-semibold disabled:opacity-50"
+        >
+          {loading ? 'Analyzing...' : 'Analyze'}
+        </button>
+      </div>
     </div>
   )
 }

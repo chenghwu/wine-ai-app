@@ -6,6 +6,8 @@ A full-stack AI-powered wine analysis platform that combines expert-level sensor
 
 ## ⭐️ Features
 
+-  **Dual Search Methods**: Text input OR camera/photo wine label recognition
+-  **OCR Wine Label Analysis**: Capture wine labels via camera or upload photos for automatic wine information extraction
 -  Text-based query understanding using Gemini
 -  Smart wine query extraction using LLM (Gemini)
 -  Google Programmable Search + Web crawling to collect wine data
@@ -13,6 +15,7 @@ A full-stack AI-powered wine analysis platform that combines expert-level sensor
 -  Gemini LLM integration for summary + evaluation
 -  SAT analysis aligned with WSET (Wine & Spirit Education Trust)
 -  Chat-style frontend powered by React, Next.js, Tailwind CSS
+-  **Real-time Progress Tracking**: Detailed analysis stages with progress indicators
 -  Docker + Makefile support for local development
 
 ---
@@ -28,7 +31,9 @@ A full-stack AI-powered wine analysis platform that combines expert-level sensor
 ### Backend
 - **FastAPI** (Python 3.11)
 - **Gemini LLM** via MCP API
+- **Gemini Vision API** for OCR and image analysis
 - **Google Programmable Search API**
+- **Image Processing** with Pillow (PIL) for OCR optimization
 - **File-based and PostgreSQL caching**
 - Deployed on **Google Cloud Run**
 
@@ -58,7 +63,10 @@ wine_ai_app/
 │   │   └── session.py     # DB session management
 │   ├── models/            # Pydantic models for request/response
 │   ├── prompts/           # LLM prompt templates
-│   ├── services/          # Business logic (LLM, rules, handlers)
+│   ├── services/          # Business logic (LLM, rules, handlers, image processing)
+│   │   ├── image/         # Image validation and processing
+│   │   ├── vision/        # Gemini Vision API integration
+│   │   └── handlers/      # Request handlers including image analysis
 │   ├── scripts/           # Utility and maintenance scripts
 │   ├── utils/             # Common utilities (caching, env, search)
 │   ├── config.py          # Application configuration
@@ -67,7 +75,8 @@ wine_ai_app/
 │   └── version.py         # Application version
 │
 ├── frontend/              # Next.js frontend (App Router)
-│   ├── src/components/    # SearchInput, ResultCard, etc.
+│   ├── src/components/    # SearchInput, ResultCard, ProgressIndicator, InlineCameraCapture
+│   ├── src/types/         # TypeScript type definitions and progress messages
 │   ├── src/app/           # Main page layout
 │   └── public/            # Static assets
 │
@@ -198,10 +207,10 @@ make docker-compose-up
 
 ## 💡 Next Steps
 
-- Add Redis for persistence and caching
 - Search and crawling improvement
 - UI improvement
-- Add wine label recognition (OCR)
+- Enhance OCR accuracy with additional image preprocessing
+- 
 
 ---
 
