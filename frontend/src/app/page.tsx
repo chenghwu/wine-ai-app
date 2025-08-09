@@ -5,7 +5,10 @@ import { useEffect } from 'react'
 import { MockToggleButton } from '@/components/MockToggleButton'
 import { ResultCard } from '@/components/ResultCard/ResultCard'
 import { SearchInputWithButton } from '@/components/SearchInputWithButton'
+import { ProgressIndicator } from '@/components/ProgressIndicator'
+import { InlineCameraCapture } from '@/components/InlineCameraCapture'
 import { WineAnalysisResponse } from '@/types/WineAnalysisResponse'
+import { AnalysisStage, PROGRESS_MESSAGES, STAGE_PROGRESS } from '@/types/Progress'
 import { getLastUpdatedLabel } from '@/utils/dateUtils'
 
 export default function WineChatPage() {
@@ -15,6 +18,10 @@ export default function WineChatPage() {
   const [query, setQuery] = useState('')
   const [response, setResponse] = useState<WineAnalysisResponse | null>(null)
   const [loading, setLoading] = useState(false)
+  const [currentStage, setCurrentStage] = useState<AnalysisStage>('parsing_query')
+  const [progress, setProgress] = useState(0)
+  const [showCamera, setShowCamera] = useState(false)
+  const [analysisType, setAnalysisType] = useState<'text' | 'image'>('text')
   const [useMock, setUseMock] = useState(() => {
     return process.env.NEXT_PUBLIC_USE_MOCK === "true";
   });
@@ -38,13 +45,50 @@ export default function WineChatPage() {
     fetchMetadata()
   }, [])
 
+  // Simulate progress stages for text analysis
+  const simulateProgress = async () => {
+    const stages: AnalysisStage[] = ['parsing_query', 'gathering_info', 'aggregating_results', 'analyzing_ai']
+    
+    for (let i = 0; i < stages.length; i++) {
+      const stage = stages[i]
+      setCurrentStage(stage)
+      setProgress(STAGE_PROGRESS[stage])
+      
+      // Wait between stages (shorter for better UX)
+      if (i < stages.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 800))
+      }
+    }
+  }
+
+  // Simulate progress stages for image analysis
+  const simulateImageProgress = async () => {
+    const stages: AnalysisStage[] = ['processing_image', 'extracting_info', 'gathering_additional_data', 'analyzing_ai']
+    
+    for (let i = 0; i < stages.length; i++) {
+      const stage = stages[i]
+      setCurrentStage(stage)
+      setProgress(STAGE_PROGRESS[stage])
+      
+      // Wait between stages (image processing takes longer)
+      if (i < stages.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1200))
+      }
+    }
+  }
+
   // Handler
   const handleSearch = async () => {
     if (!query.trim()) return
     setLoading(true)
     setResponse(null)
+    setProgress(0)
+    setAnalysisType('text')
 
     try {
+      // Start progress simulation
+      const progressPromise = simulateProgress()
+      
       const baseUrl = process.env.NEXT_PUBLIC_API_URL
       const res = await fetch(`${baseUrl}/analyze-wine`,
       {
@@ -62,7 +106,10 @@ export default function WineChatPage() {
           }
         })
       })
-      const data = await res.json()
+      
+      // Wait for both progress and API response
+      const [data] = await Promise.all([res.json(), progressPromise])
+      
       const result: WineAnalysisResponse = {
         status: 'success',
         ...data.output,
@@ -82,7 +129,71 @@ export default function WineChatPage() {
       })
     } finally {
       setLoading(false)
+      setProgress(0)
     }
+  }
+
+  const handleCameraClick = () => {
+    setShowCamera(!showCamera)
+  }
+
+  const handleImageCapture = async (imageData: string) => {
+    setShowCamera(false)
+    setLoading(true)
+    setResponse(null)
+    setProgress(0)
+    setAnalysisType('image')
+    
+    try {
+      // Simulate progress for image analysis
+      const progressPromise = simulateImageProgress()
+      
+      // Convert base64 to blob for upload
+      const response = await fetch(imageData)
+      const blob = await response.blob()
+      const file = new File([blob], 'wine_label.jpg', { type: 'image/jpeg' })
+      
+      // Prepare form data
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('context', JSON.stringify({
+        model: process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-2.5-flash',
+        user_id: 'demo-user',
+        timestamp: new Date().toISOString(),
+        ruleset: 'WSET Level 4 SAT',
+        confidence: 0.9,
+        use_mock: useMock,
+      }))
+      
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL
+      const res = await fetch(`${baseUrl}/analyze-wine-image`, {
+        method: 'POST',
+        body: formData
+      })
+      
+      // Wait for both progress and API response
+      const [data] = await Promise.all([res.json(), progressPromise])
+      
+      const result: WineAnalysisResponse = {
+        status: 'success',
+        ...data.output,
+      }
+      setResponse(result)
+      
+    } catch (err) {
+      console.error('Error analyzing image:', err)
+      setResponse({
+        status: 'error',
+        error: 'Failed to analyze wine from image. Please try again or enter the wine name manually.'
+      })
+    } finally {
+      setLoading(false)
+      setProgress(0)
+    }
+  }
+
+  const handleCameraClose = () => {
+    setShowCamera(false)
   }
 
   return (
@@ -101,7 +212,20 @@ export default function WineChatPage() {
           value={query}
           onChange={setQuery}
           onSubmit={handleSearch}
+          onCameraClick={handleCameraClick}
           loading={loading}
+        />
+
+        <ProgressIndicator
+          isVisible={loading}
+          currentStage={PROGRESS_MESSAGES[currentStage][analysisType]}
+          progress={progress}
+        />
+
+        <InlineCameraCapture
+          isVisible={showCamera}
+          onClose={handleCameraClose}
+          onImageCapture={handleImageCapture}
         />
 
         {response?.status === 'error' && (
