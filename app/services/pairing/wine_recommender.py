@@ -404,7 +404,7 @@ Focus on classic wine pairing principles: complement or contrast flavors, match 
                     "wine_pairings": {
                         "specific_recommendations": [
                             {
-                                "wine_name": "2019 Domaine Drouhin Pinot Noir",
+                                "wine_name": "Domaine Drouhin Pinot Noir",
                                 "vintage": "2019",
                                 "region": "Willamette Valley, Oregon",
                                 "price_range": "$35-45",

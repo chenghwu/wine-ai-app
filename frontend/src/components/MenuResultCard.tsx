@@ -65,7 +65,7 @@ export function MenuResultCard({ result }: MenuResultCardProps) {
   const { restaurant_info, wine_recommendations } = result
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-zinc-900 rounded-lg border border-zinc-800 p-6">
+    <div className="w-full max-w-4xl mx-auto bg-zinc-900 rounded-lg border border-zinc-800 p-3">
       {/* Restaurant Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
@@ -84,7 +84,7 @@ export function MenuResultCard({ result }: MenuResultCardProps) {
       {/* Menu Items with Wine Pairings */}
       <div className="space-y-6">
         {wine_recommendations.menu_items.map((item, index) => (
-          <div key={index} className="border border-zinc-800 rounded-lg p-5">
+          <div key={index} className="border border-zinc-800 rounded-lg p-3">
             {/* Dish Info */}
             <div className="mb-4">
               <div className="flex items-start justify-between mb-2">
