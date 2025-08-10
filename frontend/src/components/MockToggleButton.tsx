@@ -10,7 +10,7 @@ export function MockToggleButton({ useMock, onToggle }: MockToggleButtonProps) {
     <div className="fixed bottom-4 right-4 z-50 text-sm text-zinc-400">
       <button
         onClick={onToggle}
-        aria-pressed={useMock}
+        aria-checked={useMock}
         role="switch"
         className={`px-4 py-2 rounded-lg border transition-colors duration-200 font-medium ${
           useMock

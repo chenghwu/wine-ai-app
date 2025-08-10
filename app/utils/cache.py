@@ -2,8 +2,9 @@ import aiofiles
 import json
 import logging
 import os
-from typing import Callable, Awaitable, Any
-from hashlib import sha1
+import time
+from typing import Callable, Awaitable, Any, Optional
+from hashlib import sha1, sha256
 
 logger = logging.getLogger(__name__)
 
@@ -68,3 +69,166 @@ async def get_cache_or_fetch_async(category: str, key: str, fetch_func: Callable
         logger.info(f"Skipping cache save: {key}")
     
     return result
+
+
+# Menu analysis specific cache functions
+def cache_menu_analysis(image_hash: str, analysis_result: dict, ttl_minutes: int = 15) -> None:
+    """
+    Cache menu analysis result with TTL for temporary storage.
+    Used to avoid reprocessing identical menu photos.
+    """
+    if IS_PROD:
+        logger.debug(f"[Prod] Skipping menu analysis cache write for: {image_hash}")
+        return
+
+    cache_data = {
+        "result": analysis_result,
+        "cached_at": time.time(),
+        "ttl_seconds": ttl_minutes * 60
+    }
+    
+    path = get_cache_path("menu", image_hash)
+    try:
+        with open(path, "w") as f:
+            json.dump(cache_data, f, indent=2)
+        logger.info(f"Menu analysis cached: {image_hash}")
+    except Exception as e:
+        logger.warning(f"Failed to cache menu analysis: {e}")
+
+
+def get_cached_menu_analysis(image_hash: str) -> Optional[dict]:
+    """
+    Retrieve cached menu analysis if exists and not expired.
+    Returns None if cache miss or expired.
+    """
+    if IS_PROD:
+        logger.debug(f"[Prod] Skipping menu analysis cache read for: {image_hash}")
+        return None
+
+    path = get_cache_path("menu", image_hash)
+    if not os.path.exists(path):
+        return None
+
+    try:
+        with open(path, "r") as f:
+            cache_data = json.load(f)
+        
+        cached_at = cache_data.get("cached_at", 0)
+        ttl_seconds = cache_data.get("ttl_seconds", 900)  # default 15 min
+        
+        if time.time() - cached_at > ttl_seconds:
+            logger.info(f"Menu analysis cache expired: {image_hash}")
+            os.remove(path)  # cleanup expired cache
+            return None
+        
+        logger.info(f"Menu analysis cache hit: {image_hash}")
+        return cache_data.get("result")
+        
+    except Exception as e:
+        logger.warning(f"Failed to read menu analysis cache: {e}")
+        return None
+
+
+def generate_image_hash(image_data: bytes) -> str:
+    """
+    Generate consistent hash for image data.
+    Used for caching menu analysis results.
+    """
+    return sha256(image_data).hexdigest()[:16]  # 16 chars for shorter file names
+
+
+def cache_wine_recommendations(food_hash: str, recommendations: dict, ttl_minutes: int = 15) -> None:
+    """
+    Cache wine recommendations for food items with TTL.
+    Used to avoid regenerating recommendations for similar food descriptions.
+    """
+    if IS_PROD:
+        logger.debug(f"[Prod] Skipping wine recommendations cache write for: {food_hash}")
+        return
+
+    cache_data = {
+        "recommendations": recommendations,
+        "cached_at": time.time(),
+        "ttl_seconds": ttl_minutes * 60
+    }
+    
+    path = get_cache_path("pairing", food_hash)
+    try:
+        with open(path, "w") as f:
+            json.dump(cache_data, f, indent=2)
+        logger.info(f"Wine recommendations cached: {food_hash}")
+    except Exception as e:
+        logger.warning(f"Failed to cache wine recommendations: {e}")
+
+
+def get_cached_wine_recommendations(food_hash: str) -> Optional[dict]:
+    """
+    Retrieve cached wine recommendations if exists and not expired.
+    Returns None if cache miss or expired.
+    """
+    if IS_PROD:
+        logger.debug(f"[Prod] Skipping wine recommendations cache read for: {food_hash}")
+        return None
+
+    path = get_cache_path("pairing", food_hash)
+    if not os.path.exists(path):
+        return None
+
+    try:
+        with open(path, "r") as f:
+            cache_data = json.load(f)
+        
+        cached_at = cache_data.get("cached_at", 0)
+        ttl_seconds = cache_data.get("ttl_seconds", 900)  # default 15 min
+        
+        if time.time() - cached_at > ttl_seconds:
+            logger.info(f"Wine recommendations cache expired: {food_hash}")
+            os.remove(path)  # cleanup expired cache
+            return None
+        
+        logger.info(f"Wine recommendations cache hit: {food_hash}")
+        return cache_data.get("recommendations")
+        
+    except Exception as e:
+        logger.warning(f"Failed to read wine recommendations cache: {e}")
+        return None
+
+
+def cleanup_expired_cache() -> None:
+    """
+    Cleanup expired cache files for menu and pairing categories.
+    Can be called periodically or on app startup.
+    """
+    if IS_PROD:
+        return
+    
+    categories = ["menu", "pairing"]
+    for category in categories:
+        cache_dir = os.path.join(CACHE_ROOT, category)
+        if not os.path.exists(cache_dir):
+            continue
+            
+        for filename in os.listdir(cache_dir):
+            if not filename.endswith(".json"):
+                continue
+                
+            file_path = os.path.join(cache_dir, filename)
+            try:
+                with open(file_path, "r") as f:
+                    cache_data = json.load(f)
+                
+                cached_at = cache_data.get("cached_at", 0)
+                ttl_seconds = cache_data.get("ttl_seconds", 900)
+                
+                if time.time() - cached_at > ttl_seconds:
+                    os.remove(file_path)
+                    logger.info(f"Removed expired cache file: {file_path}")
+                    
+            except Exception as e:
+                logger.warning(f"Failed to check cache file {file_path}: {e}")
+                # Remove corrupted cache files
+                try:
+                    os.remove(file_path)
+                    logger.info(f"Removed corrupted cache file: {file_path}")
+                except:
+                    pass
