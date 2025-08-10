@@ -116,7 +116,7 @@ export default function WineChatPage() {
 
   // Simulate progress stages for text analysis
   const simulateProgress = async () => {
-    const stages: AnalysisStage[] = ['parsing_query', 'gathering_info', 'aggregating_results', 'analyzing_ai']
+    const stages: AnalysisStage[] = ['parsing_query', 'gathering_info', 'aggregating_results', 'analyzing_ai', 'finalizing_results']
     
     for (let i = 0; i < stages.length; i++) {
       const stage = stages[i]
@@ -132,7 +132,7 @@ export default function WineChatPage() {
 
   // Simulate progress stages for image analysis
   const simulateImageProgress = async () => {
-    const stages: AnalysisStage[] = ['processing_image', 'extracting_info', 'gathering_additional_data', 'analyzing_ai']
+    const stages: AnalysisStage[] = ['processing_image', 'extracting_info', 'gathering_additional_data', 'analyzing_ai', 'finalizing_results']
     
     for (let i = 0; i < stages.length; i++) {
       const stage = stages[i]

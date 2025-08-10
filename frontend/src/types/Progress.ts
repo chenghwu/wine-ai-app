@@ -3,6 +3,7 @@ export type AnalysisStage =
   | 'gathering_info'
   | 'aggregating_results'
   | 'analyzing_ai'
+  | 'finalizing_results'
   | 'processing_image'
   | 'extracting_info'
   | 'gathering_additional_data'
@@ -34,6 +35,10 @@ export const PROGRESS_MESSAGES: Record<AnalysisStage, { text: string, image: str
     text: 'Analyzing with Wine Intelligence...',
     image: 'Analyzing with Wine Intelligence...'
   },
+  finalizing_results: {
+    text: 'Finalizing recommendations...',
+    image: 'Finalizing analysis...'
+  },
   processing_image: {
     text: 'Processing image...',
     image: 'Processing image...'
@@ -53,12 +58,13 @@ export const PROGRESS_MESSAGES: Record<AnalysisStage, { text: string, image: str
 }
 
 export const STAGE_PROGRESS: Record<AnalysisStage, number> = {
-  parsing_query: 25,
-  gathering_info: 50,
-  aggregating_results: 75,
-  analyzing_ai: 100,
-  processing_image: 25,
-  extracting_info: 50,
-  gathering_additional_data: 75,
+  parsing_query: 20,
+  gathering_info: 40,
+  aggregating_results: 60,
+  analyzing_ai: 80,
+  finalizing_results: 95,
+  processing_image: 20,
+  extracting_info: 40,
+  gathering_additional_data: 60,
   completed: 100
 }
