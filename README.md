@@ -6,14 +6,26 @@ A full-stack AI-powered wine analysis platform that combines expert-level sensor
 
 ## ⭐️ Features
 
+### 🍷 Wine Analysis Mode
 -  **Dual Search Methods**: Text input OR camera/photo wine label recognition
 -  **OCR Wine Label Analysis**: Capture wine labels via camera or upload photos for automatic wine information extraction
 -  Text-based query understanding using Gemini
 -  Smart wine query extraction using LLM (Gemini)
 -  Google Programmable Search + Web crawling to collect wine data
+-  SAT analysis aligned with WSET (Wine & Spirit Education Trust)
+-  **Food Pairing Recommendations**: AI-powered wine-to-food pairing suggestions
+
+### 🍽️ Menu Analysis Mode
+-  **Menu-to-Wine Pairing**: Upload menu photos or describe dishes to get wine recommendations
+-  **OCR Menu Processing**: Extract menu items from restaurant menu photos
+-  **Specific Wine Recommendations**: Get targeted wine suggestions for each dish
+-  **General Wine Categories**: Receive wine style and varietal guidance for menu items
+
+### 🎯 Core Features
+-  **Dual-Mode Interface**: Toggle between Wine Mode and Menu Mode workflows
+-  **Session-based Search History**: Track and restore previous searches with dropdown interface
 -  File-based caching (search, HTML, LLM summaries)
 -  Gemini LLM integration for summary + evaluation
--  SAT analysis aligned with WSET (Wine & Spirit Education Trust)
 -  Chat-style frontend powered by React, Next.js, Tailwind CSS
 -  **Real-time Progress Tracking**: Detailed analysis stages with progress indicators
 -  Docker + Makefile support for local development

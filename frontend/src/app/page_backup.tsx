@@ -6,7 +6,7 @@ import { ResultCard } from '@/components/ResultCard/ResultCard'
 import { SearchInputWithButton } from '@/components/SearchInputWithButton'
 import { ProgressIndicator } from '@/components/ProgressIndicator'
 import { InlineCameraCapture } from '@/components/InlineCameraCapture'
-import { AppMode } from '@/components/ModeToggle'
+import { ModeToggle, AppMode } from '@/components/ModeToggle'
 import { SearchHistory, HistoryItem } from '@/components/SearchHistory'
 import { MenuResultCard } from '@/components/MenuResultCard'
 import { WineAnalysisResponse } from '@/types/WineAnalysisResponse'
@@ -97,7 +97,165 @@ export default function WineChatPage() {
     }
   }
 
-  // Wine-specific handlers
+  // Original handlers will be replaced by mode-specific ones below
+
+  const handleCameraClick = () => {
+    setShowCamera(!showCamera)
+  }
+
+  // Original handleImageCapture removed - using mode-specific ones below
+
+  const handleCameraClose = () => {
+    setShowCamera(false)
+  }
+
+  // Menu analysis handlers
+  const handleMenuImageCapture = async (imageData: string) => {
+    setShowCamera(false)
+    setLoading(true)
+    setResponse(null)
+    setProgress(0)
+    setAnalysisType('image')
+    
+    try {
+      // Simulate progress for menu image analysis
+      const progressPromise = simulateImageProgress()
+      
+      // Convert base64 to blob for upload
+      const response = await fetch(imageData)
+      const blob = await response.blob()
+      const file = new File([blob], 'menu_image.jpg', { type: 'image/jpeg' })
+      
+      // Prepare form data
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('context', JSON.stringify({
+        model: process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-2.5-flash',
+        user_id: 'demo-user',
+        timestamp: new Date().toISOString(),
+        use_mock: useMock,
+      }))
+      
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL
+      const res = await fetch(`${baseUrl}/analyze-menu-image`, {
+        method: 'POST',
+        body: formData
+      })
+      
+      // Wait for both progress and API response
+      const [data] = await Promise.all([res.json(), progressPromise])
+      setResponse(data)
+      
+      // Save to history
+      if (data.status === 'success') {
+        saveToHistory(data, 'menu', 'Menu Analysis')
+      }
+      
+    } catch (err) {
+      console.error('Error analyzing menu image:', err)
+      setResponse({
+        status: 'error',
+        error: 'Failed to analyze menu image. Please try again.'
+      })
+    } finally {
+      setLoading(false)
+      setProgress(0)
+    }
+  }
+
+  const handleFoodTextSearch = async () => {
+    if (!query.trim()) return
+    setLoading(true)
+    setResponse(null)
+    setProgress(0)
+    setAnalysisType('text')
+
+    try {
+      // Start progress simulation
+      const progressPromise = simulateProgress()
+      
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL
+      const res = await fetch(`${baseUrl}/analyze-food-text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: { food_description: query },
+          context: {
+            model: process.env.NEXT_PUBLIC_GEMINI_MODEL,
+            timestamp: new Date().toISOString(),
+            use_mock: useMock,
+          }
+        })
+      })
+      
+      // Wait for both progress and API response
+      const [data] = await Promise.all([res.json(), progressPromise])
+      setResponse(data)
+
+      // Save to history and clear query if successful
+      if (data.status === 'success') {
+        saveToHistory(data, 'menu', query)
+        setQuery('')
+      }
+
+    } catch (err) {
+      console.error('Error calling food analysis API:', err)
+      setResponse({
+        status: 'error',
+        error: 'Failed to analyze food description.'
+      })
+    } finally {
+      setLoading(false)
+      setProgress(0)
+    }
+  }
+
+  // History management
+  const saveToHistory = (result: any, type: AppMode, query: string) => {
+    const historyItem: HistoryItem = {
+      id: Date.now().toString(),
+      timestamp: new Date(),
+      type,
+      query,
+      preview: type === 'wine' 
+        ? `${result.wine || 'Wine analysis'} - ${result.region || 'Unknown region'}`
+        : `${result.wine_recommendations?.menu_items?.length || 0} menu items found`,
+      result
+    }
+
+    const updatedHistory = [historyItem, ...searchHistory].slice(0, 10) // Keep last 10
+    setSearchHistory(updatedHistory)
+    sessionStorage.setItem('wineSearchHistory', JSON.stringify(updatedHistory))
+  }
+
+  const handleSelectHistory = (item: HistoryItem) => {
+    setResponse(item.result)
+    setAppMode(item.type)
+  }
+
+  const handleClearHistory = () => {
+    setSearchHistory([])
+    sessionStorage.removeItem('wineSearchHistory')
+  }
+
+  // Mode-specific handlers
+  const handleSearch = () => {
+    if (appMode === 'wine') {
+      handleWineSearch()
+    } else {
+      handleFoodTextSearch()
+    }
+  }
+
+  const handleImageCapture = (imageData: string) => {
+    if (appMode === 'wine') {
+      handleWineImageCapture(imageData)
+    } else {
+      handleMenuImageCapture(imageData)
+    }
+  }
+
+  // Rename original handlers for clarity
   const handleWineSearch = async () => {
     if (!query.trim()) return
     setLoading(true)
@@ -110,7 +268,8 @@ export default function WineChatPage() {
       const progressPromise = simulateProgress()
       
       const baseUrl = process.env.NEXT_PUBLIC_API_URL
-      const res = await fetch(`${baseUrl}/analyze-wine`, {
+      const res = await fetch(`${baseUrl}/analyze-wine`,
+      {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -213,172 +372,21 @@ export default function WineChatPage() {
     }
   }
 
-  // Menu-specific handlers
-  const handleFoodTextSearch = async () => {
-    if (!query.trim()) return
-    setLoading(true)
-    setResponse(null)
-    setProgress(0)
-    setAnalysisType('text')
-
-    try {
-      // Start progress simulation
-      const progressPromise = simulateProgress()
-      
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL
-      const res = await fetch(`${baseUrl}/analyze-food-text`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          input: { food_description: query },
-          context: {
-            model: process.env.NEXT_PUBLIC_GEMINI_MODEL,
-            timestamp: new Date().toISOString(),
-            use_mock: useMock,
-          }
-        })
-      })
-      
-      // Wait for both progress and API response
-      const [data] = await Promise.all([res.json(), progressPromise])
-      setResponse(data)
-
-      // Save to history and clear query if successful
-      if (data.status === 'success') {
-        saveToHistory(data, 'menu', query)
-        setQuery('')
-      }
-
-    } catch (err) {
-      console.error('Error calling food analysis API:', err)
-      setResponse({
-        status: 'error',
-        error: 'Failed to analyze food description.'
-      })
-    } finally {
-      setLoading(false)
-      setProgress(0)
-    }
-  }
-
-  const handleMenuImageCapture = async (imageData: string) => {
-    setShowCamera(false)
-    setLoading(true)
-    setResponse(null)
-    setProgress(0)
-    setAnalysisType('image')
-    
-    try {
-      // Simulate progress for menu image analysis
-      const progressPromise = simulateImageProgress()
-      
-      // Convert base64 to blob for upload
-      const response = await fetch(imageData)
-      const blob = await response.blob()
-      const file = new File([blob], 'menu_image.jpg', { type: 'image/jpeg' })
-      
-      // Prepare form data
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('context', JSON.stringify({
-        model: process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-2.5-flash',
-        user_id: 'demo-user',
-        timestamp: new Date().toISOString(),
-        use_mock: useMock,
-      }))
-      
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL
-      const res = await fetch(`${baseUrl}/analyze-menu-image`, {
-        method: 'POST',
-        body: formData
-      })
-      
-      // Wait for both progress and API response
-      const [data] = await Promise.all([res.json(), progressPromise])
-      setResponse(data)
-      
-      // Save to history
-      if (data.status === 'success') {
-        saveToHistory(data, 'menu', 'Menu Analysis')
-      }
-      
-    } catch (err) {
-      console.error('Error analyzing menu image:', err)
-      setResponse({
-        status: 'error',
-        error: 'Failed to analyze menu image. Please try again.'
-      })
-    } finally {
-      setLoading(false)
-      setProgress(0)
-    }
-  }
-
-  // History management
-  const saveToHistory = (result: any, type: AppMode, query: string) => {
-    const historyItem: HistoryItem = {
-      id: Date.now().toString(),
-      timestamp: new Date(),
-      type,
-      query,
-      preview: type === 'wine' 
-        ? `${result.wine || 'Wine analysis'}`
-        : `${result.wine_recommendations?.menu_items?.length || 0} menu items found`,
-      result
-    }
-
-    const updatedHistory = [historyItem, ...searchHistory].slice(0, 10) // Keep last 10
-    setSearchHistory(updatedHistory)
-    sessionStorage.setItem('wineSearchHistory', JSON.stringify(updatedHistory))
-  }
-
-  const handleSelectHistory = (item: HistoryItem) => {
-    setResponse(item.result)
-    setAppMode(item.type)
-  }
-
-  const handleClearHistory = () => {
-    setSearchHistory([])
-    sessionStorage.removeItem('wineSearchHistory')
-  }
-
-  // Mode-specific unified handlers
-  const handleSearch = () => {
-    if (appMode === 'wine') {
-      handleWineSearch()
-    } else {
-      handleFoodTextSearch()
-    }
-  }
-
-  const handleImageCapture = (imageData: string) => {
-    if (appMode === 'wine') {
-      handleWineImageCapture(imageData)
-    } else {
-      handleMenuImageCapture(imageData)
-    }
-  }
-
-  // UI handlers
-  const handleCameraClick = () => {
-    setShowCamera(!showCamera)
-  }
-
-  const handleCameraClose = () => {
-    setShowCamera(false)
-  }
-
   // Dynamic placeholders and button text based on mode
   const getPlaceholder = () => {
     if (appMode === 'wine') {
       return 'e.g. Opus One 2015'
     } else {
-      return 'Describe dish or take menu photo'
+      return 'Describe your dish or take menu photo...'
     }
   }
 
   const getButtonText = () => {
-    return loading ? 'Analyzing...' : 'Analyze'
+    if (appMode === 'wine') {
+      return loading ? 'Analyzing...' : 'Analyze'
+    } else {
+      return loading ? 'Finding wines...' : 'Find Wines'
+    }
   }
 
   return (
@@ -398,28 +406,25 @@ export default function WineChatPage() {
           }
         </p>
 
-        {/* Search with integrated mode toggle and history */}
-        <div className="w-full max-w-4xl space-y-2">
-          <div className="flex items-center justify-end">
-            <SearchHistory 
-              history={searchHistory}
-              onSelectHistory={handleSelectHistory}
-              onClearHistory={handleClearHistory}
-            />
-          </div>
-          
-          <SearchInputWithButton
-            value={query}
-            onChange={setQuery}
-            onSubmit={handleSearch}
-            onCameraClick={handleCameraClick}
-            loading={loading}
-            placeholder={getPlaceholder()}
-            buttonText={getButtonText()}
-            currentMode={appMode}
-            onModeChange={setAppMode}
+        {/* Mode Toggle and History */}
+        <div className="w-full max-w-md flex items-center justify-between gap-4">
+          <ModeToggle currentMode={appMode} onModeChange={setAppMode} />
+          <SearchHistory 
+            history={searchHistory}
+            onSelectHistory={handleSelectHistory}
+            onClearHistory={handleClearHistory}
           />
         </div>
+
+        <SearchInputWithButton
+          value={query}
+          onChange={setQuery}
+          onSubmit={handleSearch}
+          onCameraClick={handleCameraClick}
+          loading={loading}
+          placeholder={getPlaceholder()}
+          buttonText={getButtonText()}
+        />
 
         <ProgressIndicator
           isVisible={loading}

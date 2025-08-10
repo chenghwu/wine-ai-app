@@ -74,3 +74,11 @@ class ImageAnalysisResult(BaseModel):
 
 class WineImageMCPRequest(BaseModel):
     context: MCPContext
+
+# Menu analysis models
+class MenuMCPRequest(BaseModel):
+    context: MCPContext
+
+class FoodTextRequest(BaseModel):
+    input: Dict[str, Any] = Field(..., json_schema_extra={"example": {"food_description": "grilled salmon with lemon"}})
+    context: MCPContext
