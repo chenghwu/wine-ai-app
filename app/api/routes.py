@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.crud.wine_summary import get_all_wine_summaries
 from app.db.session import get_async_session
 from app.exceptions import GoogleSearchApiError, GeminiApiError
-from app.models.mcp_model import WineMCPRequest, WineImageMCPRequest
+from app.models.mcp_model import WineMCPRequest, WineImageMCPRequest, MenuMCPRequest, FoodTextRequest
 from app.services.handlers.wine_summary_handler import (
     handle_wine_analysis_query, handle_mock_response, handle_cached_wine_summary, handle_fresh_summary
 )
@@ -13,6 +13,7 @@ from app.services.handlers.food_pairing_handler import (
     handle_cached_pairings, handle_food_pairing
 )
 from app.services.handlers.image_analysis_handler import handle_image_analysis
+from app.services.handlers.menu_analysis_handler import handle_menu_analysis, handle_food_text_analysis
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -95,6 +96,61 @@ async def analyze_wine_image(
         return {
             "status": "error",
             "error": f"Failed to process image: {str(e)}"
+        }
+
+@router.post("/analyze-menu-image", summary="Analyze menu from uploaded image and recommend wines")
+async def analyze_menu_image(
+    file: UploadFile = File(...),
+    context: str = Form(...),  # JSON string of MCPContext
+    session: AsyncSession = Depends(get_async_session)
+):
+    """
+    Analyze menu from uploaded image and generate wine recommendations.
+    """
+    try:
+        # Parse context from form data
+        import json
+        from app.models.mcp_model import MCPContext
+        
+        context_data = json.loads(context)
+        mcp_context = MCPContext(**context_data)
+        
+        # Create request object
+        request = MenuMCPRequest(context=mcp_context)
+        
+        # Process the menu image
+        return await handle_menu_analysis(file, request)
+        
+    except json.JSONDecodeError:
+        return {
+            "status": "error",
+            "error": "Invalid context data format"
+        }
+    except Exception as e:
+        logger.exception("Menu analysis endpoint failed")
+        return {
+            "status": "error",
+            "error": f"Failed to process menu image: {str(e)}"
+        }
+
+@router.post("/analyze-food-text", summary="Analyze food description and recommend wines")
+async def analyze_food_text(
+    request: FoodTextRequest,
+    session: AsyncSession = Depends(get_async_session)
+):
+    """
+    Analyze text description of food/dish and generate wine recommendations.
+    """
+    try:
+        return await handle_food_text_analysis(
+            food_description=request.input.get("food_description", ""),
+            request=request
+        )
+    except Exception as e:
+        logger.exception("Food text analysis endpoint failed")
+        return {
+            "status": "error",
+            "error": f"Failed to analyze food description: {str(e)}"
         }
 
 @router.get("/pair-food", summary="Recommend food pairings for a wine")

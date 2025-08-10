@@ -9,3 +9,7 @@ class GoogleSearchApiError(WineAppError):
 class GeminiApiError(WineAppError):
     """Raised when Gemini API fails"""
     pass
+
+class ImageValidationError(WineAppError):
+    """Raised when image validation fails"""
+    pass
