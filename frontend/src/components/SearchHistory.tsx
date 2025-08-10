@@ -1,6 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Clock, Wine, UtensilsCrossed, X } from 'lucide-react'
+import { Clock, Wine, UtensilsCrossed } from 'lucide-react'
 import { AppMode } from './ModeToggle'
+import { WineAnalysisResponse } from '../types/WineAnalysisResponse'
+
+interface MenuAnalysisResponse {
+  status: string
+  error?: string
+  restaurant_info?: {
+    name?: string
+    cuisine_style: string
+    confidence: number
+  }
+  menu_analysis?: {
+    items_found: number
+    extraction_method: string
+  }
+  wine_recommendations?: {
+    menu_items?: unknown[]
+    overall_recommendations?: unknown[]
+  }
+  [key: string]: unknown
+}
 
 export interface HistoryItem {
   id: string
@@ -8,7 +28,7 @@ export interface HistoryItem {
   type: AppMode
   query: string
   preview: string
-  result: any
+  result: WineAnalysisResponse | MenuAnalysisResponse
 }
 
 interface SearchHistoryProps {

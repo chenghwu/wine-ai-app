@@ -149,7 +149,7 @@ export function MenuResultCard({ result }: MenuResultCardProps) {
                           )}
                         </div>
                         <p className="text-zinc-300 text-sm italic">
-                          "{wine.reasoning}"
+                          &ldquo;{wine.reasoning}&rdquo;
                         </p>
                         {wine.confidence && (
                           <div className="mt-2">
@@ -198,7 +198,7 @@ export function MenuResultCard({ result }: MenuResultCardProps) {
                           </p>
                         )}
                         <p className="text-zinc-300 text-sm italic">
-                          "{category.reasoning}"
+                          &ldquo;{category.reasoning}&rdquo;
                         </p>
                       </div>
                     ))}

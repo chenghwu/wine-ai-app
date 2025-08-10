@@ -13,12 +13,61 @@ import { WineAnalysisResponse } from '@/types/WineAnalysisResponse'
 import { AnalysisStage, PROGRESS_MESSAGES, STAGE_PROGRESS } from '@/types/Progress'
 import { getLastUpdatedLabel } from '@/utils/dateUtils'
 
+interface MenuAnalysisResponse {
+  status: string
+  error?: string
+  restaurant_info: {
+    name?: string
+    cuisine_style: string
+    confidence: number
+  }
+  menu_analysis: {
+    items_found: number
+    extraction_method: string
+  }
+  wine_recommendations: {
+    menu_items: Array<{
+      dish: {
+        dish_name: string
+        category?: string
+        price?: string
+        protein?: string
+        cooking_method?: string
+        cuisine_type?: string
+        description?: string
+      }
+      wine_pairings: {
+        specific_recommendations: Array<{
+          wine_name: string
+          vintage?: string
+          region: string
+          price_range?: string
+          reasoning: string
+          confidence?: number
+        }>
+        general_recommendations: Array<{
+          grape_variety: string
+          regions: string[]
+          wine_style: string
+          characteristics: string[]
+          reasoning: string
+        }>
+      }
+    }>
+    overall_recommendations: Array<{
+      category: string
+      recommendation: string
+      reasoning: string
+    }>
+  }
+}
+
 export default function WineChatPage() {
   // State
   const [version, setVersion] = useState('')
   const [lastUpdated, setLastUpdated] = useState('')
   const [query, setQuery] = useState('')
-  const [response, setResponse] = useState<WineAnalysisResponse | any>(null)
+  const [response, setResponse] = useState<WineAnalysisResponse | MenuAnalysisResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [currentStage, setCurrentStage] = useState<AnalysisStage>('parsing_query')
   const [progress, setProgress] = useState(0)
@@ -37,7 +86,7 @@ export default function WineChatPage() {
     const savedHistory = sessionStorage.getItem('wineSearchHistory')
     if (savedHistory) {
       try {
-        const parsed = JSON.parse(savedHistory).map((item: any) => ({
+        const parsed = JSON.parse(savedHistory).map((item: HistoryItem & { timestamp: string }) => ({
           ...item,
           timestamp: new Date(item.timestamp)
         }))
@@ -315,14 +364,14 @@ export default function WineChatPage() {
   }
 
   // History management
-  const saveToHistory = (result: any, type: AppMode, query: string) => {
+  const saveToHistory = (result: WineAnalysisResponse & { wine_recommendations?: { menu_items?: unknown[] } }, type: AppMode, query: string) => {
     const historyItem: HistoryItem = {
       id: Date.now().toString(),
       timestamp: new Date(),
       type,
       query,
       preview: type === 'wine' 
-        ? `${result.wine || 'Wine analysis'}`
+        ? `${'wine' in result ? result.wine : 'Wine analysis'}`
         : `${result.wine_recommendations?.menu_items?.length || 0} menu items found`,
       result
     }
@@ -333,7 +382,7 @@ export default function WineChatPage() {
   }
 
   const handleSelectHistory = (item: HistoryItem) => {
-    setResponse(item.result)
+    setResponse(item.result as WineAnalysisResponse | MenuAnalysisResponse)
     setAppMode(item.type)
   }
 
@@ -377,9 +426,6 @@ export default function WineChatPage() {
     }
   }
 
-  const getButtonText = () => {
-    return loading ? 'Analyzing...' : 'Analyze'
-  }
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
@@ -415,7 +461,6 @@ export default function WineChatPage() {
             onCameraClick={handleCameraClick}
             loading={loading}
             placeholder={getPlaceholder()}
-            buttonText={getButtonText()}
             currentMode={appMode}
             onModeChange={setAppMode}
           />
@@ -442,9 +487,9 @@ export default function WineChatPage() {
         {response?.status === 'success' && (
           <>
             {appMode === 'wine' ? (
-              <ResultCard response={response} />
+              <ResultCard response={response as WineAnalysisResponse} />
             ) : (
-              <MenuResultCard result={response} />
+              <MenuResultCard result={response as MenuAnalysisResponse} />
             )}
           </>
         )}

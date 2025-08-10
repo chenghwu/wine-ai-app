@@ -10,7 +10,6 @@ interface Props {
   onCameraClick: () => void
   loading: boolean
   placeholder?: string
-  buttonText?: string
   currentMode: AppMode
   onModeChange: (mode: AppMode) => void
 }
@@ -22,7 +21,6 @@ export function SearchInputWithButton({
   onCameraClick, 
   loading, 
   placeholder = "e.g. Opus One 2015",
-  buttonText = "Analyze",
   currentMode,
   onModeChange
 }: Props) {
