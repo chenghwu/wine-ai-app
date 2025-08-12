@@ -91,7 +91,6 @@ def cache_menu_analysis(image_hash: str, analysis_result: dict, ttl_minutes: int
     try:
         with open(path, "w") as f:
             json.dump(cache_data, f, indent=2)
-        logger.info(f"Menu analysis cached: {image_hash}")
     except Exception as e:
         logger.warning(f"Failed to cache menu analysis: {e}")
 
@@ -121,7 +120,6 @@ def get_cached_menu_analysis(image_hash: str) -> Optional[dict]:
             os.remove(path)  # cleanup expired cache
             return None
         
-        logger.info(f"Menu analysis cache hit: {image_hash}")
         return cache_data.get("result")
         
     except Exception as e:
@@ -156,7 +154,6 @@ def cache_wine_recommendations(food_hash: str, recommendations: dict, ttl_minute
     try:
         with open(path, "w") as f:
             json.dump(cache_data, f, indent=2)
-        logger.info(f"Wine recommendations cached: {food_hash}")
     except Exception as e:
         logger.warning(f"Failed to cache wine recommendations: {e}")
 
@@ -186,7 +183,6 @@ def get_cached_wine_recommendations(food_hash: str) -> Optional[dict]:
             os.remove(path)  # cleanup expired cache
             return None
         
-        logger.info(f"Wine recommendations cache hit: {food_hash}")
         return cache_data.get("recommendations")
         
     except Exception as e:
@@ -227,8 +223,62 @@ def cleanup_expired_cache() -> None:
             except Exception as e:
                 logger.warning(f"Failed to check cache file {file_path}: {e}")
                 # Remove corrupted cache files
-                try:
-                    os.remove(file_path)
-                    logger.info(f"Removed corrupted cache file: {file_path}")
-                except:
-                    pass
+
+
+def clear_all_cache() -> dict:
+    """
+    Clear all cache files from all categories.
+    This completely removes all cached data.
+    """
+    if IS_PROD:
+        logger.warning("Cache clearing is disabled in production mode")
+        return {"status": "disabled", "message": "Cache clearing is disabled in production mode"}
+    
+    cleared_files = 0
+    cleared_categories = []
+    errors = []
+    
+    try:
+        if not os.path.exists(CACHE_ROOT):
+            return {"status": "success", "message": "No cache directory found", "files_cleared": 0}
+        
+        # Get all cache categories
+        for category in os.listdir(CACHE_ROOT):
+            category_path = os.path.join(CACHE_ROOT, category)
+            if not os.path.isdir(category_path):
+                continue
+                
+            category_files = 0
+            try:
+                for filename in os.listdir(category_path):
+                    file_path = os.path.join(category_path, filename)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                        category_files += 1
+                        cleared_files += 1
+                
+                if category_files > 0:
+                    cleared_categories.append(f"{category} ({category_files} files)")
+                    logger.info(f"Cleared {category_files} files from {category} cache")
+                    
+            except Exception as e:
+                error_msg = f"Failed to clear {category} cache: {str(e)}"
+                errors.append(error_msg)
+                logger.error(error_msg)
+        
+        result = {
+            "status": "success",
+            "files_cleared": cleared_files,
+            "categories_cleared": cleared_categories,
+        }
+        
+        if errors:
+            result["errors"] = errors
+            
+        logger.info(f"Cache clearing completed: {cleared_files} files cleared from categories: {cleared_categories}")
+        return result
+        
+    except Exception as e:
+        error_msg = f"Failed to clear cache: {str(e)}"
+        logger.error(error_msg)
+        return {"status": "error", "message": error_msg}

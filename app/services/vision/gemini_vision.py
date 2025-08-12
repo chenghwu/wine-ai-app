@@ -161,10 +161,13 @@ Analyze the image now and return only the JSON response:
                 'data': base64_image
             }
             
-            # Call Gemini Vision API
+            # Call Gemini Vision API with optimized settings for complex menus
             response = self.model.generate_content(
                 [prompt, image_data],
-                generation_config={"temperature": 0.3}
+                generation_config={
+                    "temperature": 0.2,  # Lower temperature for more consistent parsing
+                    "max_output_tokens": 4096,  # Increased for complex menus with many items
+                }
             )
             
             # Parse the response

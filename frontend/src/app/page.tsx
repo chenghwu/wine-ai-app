@@ -16,16 +16,16 @@ import { getLastUpdatedLabel } from '@/utils/dateUtils'
 interface MenuAnalysisResponse {
   status: string
   error?: string
-  restaurant_info: {
+  restaurant_info?: {
     name?: string
     cuisine_style: string
     confidence: number
   }
-  menu_analysis: {
+  menu_analysis?: {
     items_found: number
     extraction_method: string
   }
-  wine_recommendations: {
+  wine_recommendations?: {
     menu_items: Array<{
       dish: {
         dish_name: string
@@ -67,7 +67,8 @@ export default function WineChatPage() {
   const [version, setVersion] = useState('')
   const [lastUpdated, setLastUpdated] = useState('')
   const [query, setQuery] = useState('')
-  const [response, setResponse] = useState<WineAnalysisResponse | MenuAnalysisResponse | null>(null)
+  const [wineResponse, setWineResponse] = useState<WineAnalysisResponse | null>(null)
+  const [menuResponse, setMenuResponse] = useState<MenuAnalysisResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [currentStage, setCurrentStage] = useState<AnalysisStage>('parsing_query')
   const [progress, setProgress] = useState(0)
@@ -80,6 +81,11 @@ export default function WineChatPage() {
   });
 
   const showMockToggle = process.env.NEXT_PUBLIC_SHOW_MOCK_TOGGLE === "true";
+
+  // Get current response based on active mode
+  const getCurrentResponse = () => {
+    return appMode === 'wine' ? wineResponse : menuResponse
+  }
 
   // Load search history from sessionStorage
   useEffect(() => {
@@ -102,12 +108,29 @@ export default function WineChatPage() {
     const fetchMetadata = async () => {
       try {
         const baseUrl = process.env.NEXT_PUBLIC_API_URL
-        const res = await fetch(`${baseUrl}/meta`)
+        console.log('Fetching metadata from:', `${baseUrl}/meta`)
+        
+        const res = await fetch(`${baseUrl}/meta`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: AbortSignal.timeout(5000) // 5 second timeout
+        })
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        
         const data = await res.json()
+        console.log('Metadata response:', data)
         setVersion(data.version || '')
         setLastUpdated(data.last_updated || '')
       } catch (err) {
         console.error('Failed to fetch metadata', err)
+        // Set fallback values to prevent UI issues
+        setVersion('3.2.0')
+        setLastUpdated('unknown')
       }
     }
 
@@ -150,7 +173,7 @@ export default function WineChatPage() {
   const handleWineSearch = async () => {
     if (!query.trim()) return
     setLoading(true)
-    setResponse(null)
+    setWineResponse(null)
     setProgress(0)
     setAnalysisType('text')
 
@@ -182,7 +205,7 @@ export default function WineChatPage() {
         status: 'success',
         ...data.output,
       };
-      setResponse(result);
+      setWineResponse(result);
   
       // Save to history and clear query if successful
       if (result.status === 'success') {
@@ -192,7 +215,7 @@ export default function WineChatPage() {
 
     } catch (err) {
       console.error('Error calling API:', err)
-      setResponse({
+      setWineResponse({
         status: 'error',
         error: 'Failed to fetch analysis.'
       })
@@ -205,7 +228,7 @@ export default function WineChatPage() {
   const handleWineImageCapture = async (imageData: string) => {
     setShowCamera(false)
     setLoading(true)
-    setResponse(null)
+    setWineResponse(null)
     setProgress(0)
     setAnalysisType('image')
     
@@ -243,7 +266,7 @@ export default function WineChatPage() {
         status: 'success',
         ...data.output,
       }
-      setResponse(result)
+      setWineResponse(result)
       
       // Save to history if successful
       if (result.status === 'success') {
@@ -252,7 +275,7 @@ export default function WineChatPage() {
       
     } catch (err) {
       console.error('Error analyzing image:', err)
-      setResponse({
+      setWineResponse({
         status: 'error',
         error: 'Failed to analyze wine from image. Please try again or enter the wine name manually.'
       })
@@ -266,7 +289,7 @@ export default function WineChatPage() {
   const handleFoodTextSearch = async () => {
     if (!query.trim()) return
     setLoading(true)
-    setResponse(null)
+    setMenuResponse(null)
     setProgress(0)
     setAnalysisType('text')
 
@@ -290,7 +313,7 @@ export default function WineChatPage() {
       
       // Wait for both progress and API response
       const [data] = await Promise.all([res.json(), progressPromise])
-      setResponse(data)
+      setMenuResponse(data)
 
       // Save to history and clear query if successful
       if (data.status === 'success') {
@@ -300,7 +323,7 @@ export default function WineChatPage() {
 
     } catch (err) {
       console.error('Error calling food analysis API:', err)
-      setResponse({
+      setMenuResponse({
         status: 'error',
         error: 'Failed to analyze food description.'
       })
@@ -313,7 +336,7 @@ export default function WineChatPage() {
   const handleMenuImageCapture = async (imageData: string) => {
     setShowCamera(false)
     setLoading(true)
-    setResponse(null)
+    setMenuResponse(null)
     setProgress(0)
     setAnalysisType('image')
     
@@ -344,7 +367,7 @@ export default function WineChatPage() {
       
       // Wait for both progress and API response
       const [data] = await Promise.all([res.json(), progressPromise])
-      setResponse(data)
+      setMenuResponse(data)
       
       // Save to history
       if (data.status === 'success') {
@@ -353,7 +376,7 @@ export default function WineChatPage() {
       
     } catch (err) {
       console.error('Error analyzing menu image:', err)
-      setResponse({
+      setMenuResponse({
         status: 'error',
         error: 'Failed to analyze menu image. Please try again.'
       })
@@ -382,13 +405,73 @@ export default function WineChatPage() {
   }
 
   const handleSelectHistory = (item: HistoryItem) => {
-    setResponse(item.result as WineAnalysisResponse | MenuAnalysisResponse)
+    if (item.type === 'wine') {
+      setWineResponse(item.result as WineAnalysisResponse)
+    } else {
+      setMenuResponse(item.result as MenuAnalysisResponse)
+    }
     setAppMode(item.type)
   }
+  
+  const handleModeChange = (mode: AppMode) => {
+    // Simply switch modes - results are preserved per mode
+    setAppMode(mode)
+  }
 
-  const handleClearHistory = () => {
-    setSearchHistory([])
-    sessionStorage.removeItem('wineSearchHistory')
+  const handleClearHistory = async () => {
+    try {
+      // Clear all frontend state and storage
+      setSearchHistory([])
+      setWineResponse(null)
+      setMenuResponse(null)
+      setQuery('')
+      
+      // Clear all browser storage
+      sessionStorage.removeItem('wineSearchHistory')
+      
+      // Clear any other potential localStorage items (if any exist)
+      try {
+        const keysToRemove = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && (key.includes('wine') || key.includes('menu') || key.includes('search'))) {
+            keysToRemove.push(key)
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key))
+        
+        if (keysToRemove.length > 0) {
+          console.log(`Cleared ${keysToRemove.length} localStorage items:`, keysToRemove)
+        }
+      } catch (storageError) {
+        console.warn('Failed to clear localStorage:', storageError)
+      }
+      
+      // Clear backend cache
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL
+      const response = await fetch(`${baseUrl}/clear-cache`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      const result = await response.json()
+      console.log('Backend cache clearing result:', result)
+      
+      if (result.status === 'success') {
+        console.log(`Successfully cleared ALL cache:`)
+        console.log(`  • Frontend: Search history and current results cleared`)
+        console.log(`  • Backend: ${result.files_cleared} cached files from categories: ${result.categories_cleared?.join(', ') || 'none'}`)
+      } else if (result.status === 'disabled') {
+        console.log('Frontend cache cleared. Backend cache clearing is disabled in production mode')
+      } else {
+        console.warn('Frontend cache cleared. Backend cache clearing failed:', result.message)
+      }
+    } catch (error) {
+      console.error('Failed to clear backend cache:', error)
+      console.log('Frontend cache was still cleared successfully')
+    }
   }
 
   // Mode-specific unified handlers
@@ -462,7 +545,7 @@ export default function WineChatPage() {
             loading={loading}
             placeholder={getPlaceholder()}
             currentMode={appMode}
-            onModeChange={setAppMode}
+            onModeChange={handleModeChange}
           />
         </div>
 
@@ -478,18 +561,18 @@ export default function WineChatPage() {
           onImageCapture={handleImageCapture}
         />
 
-        {response?.status === 'error' && (
+        {getCurrentResponse()?.status === 'error' && (
           <div className="bg-red-950 border border-red-700 p-3 rounded-md text-center text-red-400 text-sm break-words mt-4">
-            {response.error || "An unexpected error occurred. Please try again."}
+            {(getCurrentResponse() as { error?: string })?.error || "An unexpected error occurred. Please try again."}
           </div>
         )}
         
-        {response?.status === 'success' && (
+        {getCurrentResponse()?.status === 'success' && (
           <>
             {appMode === 'wine' ? (
-              <ResultCard response={response as WineAnalysisResponse} />
+              <ResultCard response={getCurrentResponse() as WineAnalysisResponse} />
             ) : (
-              <MenuResultCard result={response as MenuAnalysisResponse} />
+              <MenuResultCard result={getCurrentResponse() as MenuAnalysisResponse} />
             )}
           </>
         )}

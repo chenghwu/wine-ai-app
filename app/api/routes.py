@@ -14,6 +14,7 @@ from app.services.handlers.food_pairing_handler import (
 )
 from app.services.handlers.image_analysis_handler import handle_image_analysis
 from app.services.handlers.menu_analysis_handler import handle_menu_analysis, handle_food_text_analysis
+from app.utils.cache import clear_all_cache
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -200,3 +201,20 @@ async def get_metadata():
         "version": APP_VERSION,
         "last_updated": LAST_UPDATED,
     }
+
+@router.post("/clear-cache", summary="Clear all application cache")
+async def clear_application_cache():
+    """
+    Clear all cached data including wine recommendations, menu analysis, 
+    search results, and HTML cache. This affects the current session only.
+    """
+    try:
+        result = clear_all_cache()
+        logger.info(f"Cache clearing requested via API: {result}")
+        return result
+    except Exception as e:
+        logger.exception("Failed to clear cache via API")
+        return {
+            "status": "error",
+            "message": f"Failed to clear cache: {str(e)}"
+        }

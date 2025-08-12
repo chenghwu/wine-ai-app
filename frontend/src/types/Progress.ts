@@ -58,13 +58,13 @@ export const PROGRESS_MESSAGES: Record<AnalysisStage, { text: string, image: str
 }
 
 export const STAGE_PROGRESS: Record<AnalysisStage, number> = {
-  parsing_query: 20,
-  gathering_info: 40,
-  aggregating_results: 60,
-  analyzing_ai: 80,
-  finalizing_results: 95,
+  parsing_query: 10,
+  gathering_info: 25,
+  aggregating_results: 40,
+  analyzing_ai: 55,
+  finalizing_results: 60,
   processing_image: 20,
   extracting_info: 40,
-  gathering_additional_data: 60,
+  gathering_additional_data: 50,
   completed: 100
 }

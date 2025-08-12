@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Dict, Any
 from fastapi import UploadFile
 from app.services.image.image_validator import validate_image_file
@@ -7,7 +8,7 @@ from app.services.vision.gemini_vision import GeminiVisionAnalyzer
 from app.services.pairing.wine_recommender import WineRecommender
 from app.utils.cache import cache_menu_analysis, get_cached_menu_analysis, generate_image_hash
 from app.exceptions import GeminiApiError, ImageValidationError
-from app.models.mcp_model import MenuMCPRequest
+from app.models.mcp_model import MenuMCPRequest, FoodTextRequest
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +110,6 @@ async def handle_menu_analysis(file: UploadFile, request: MenuMCPRequest) -> Dic
             vision_analyzer = GeminiVisionAnalyzer()
             try:
                 vision_result = vision_analyzer.analyze_menu(base64_image, image_metadata)
-                logger.info(f"Menu vision analysis completed: confidence={vision_result.get('confidence', 0)}")
             except GeminiApiError as e:
                 return {
                     "status": "error",
@@ -127,11 +127,16 @@ async def handle_menu_analysis(file: UploadFile, request: MenuMCPRequest) -> Dic
             }
         
         try:
+            logger.info(f"Starting wine recommendation generation for {len(menu_items)} items")
+            start_time = time.time()
+            
             wine_recommendations = wine_recommender.recommend_wines_for_menu(
                 menu_items=menu_items,
                 use_mock=use_mock
             )
-            logger.info(f"Wine recommendations generated for {len(menu_items)} items")
+            
+            end_time = time.time()
+            logger.info(f"Wine recommendations completed for {len(menu_items)} items in {end_time - start_time:.2f}s")
         except Exception as e:
             logger.error(f"Wine recommendation generation failed: {e}")
             # Use fallback recommendations
@@ -180,7 +185,6 @@ async def handle_menu_analysis(file: UploadFile, request: MenuMCPRequest) -> Dic
         # Step 7: Cache the results
         cache_menu_analysis(image_hash, final_result, ttl_minutes=15)
         
-        logger.info("Menu analysis completed successfully")
         return final_result
         
     except Exception as e:
@@ -239,14 +243,14 @@ def extract_food_query_from_menu(menu_result: Dict[str, Any]) -> str:
     return " ".join(query_parts) or "restaurant menu items"
 
 
-async def handle_food_text_analysis(food_description: str, request: MenuMCPRequest) -> Dict[str, Any]:
+async def handle_food_text_analysis(food_description: str, request: FoodTextRequest) -> Dict[str, Any]:
     """
     Handle text-based food description for wine recommendations.
     Alternative to image-based menu analysis.
     
     Args:
         food_description: User's text description of food/dish
-        request: Menu analysis request with MCP context
+        request: Food text analysis request with MCP context
         
     Returns:
         Dict containing wine recommendations for the described food
@@ -278,12 +282,20 @@ async def handle_food_text_analysis(food_description: str, request: MenuMCPReque
         
         return {
             "status": "success",
-            "input_type": "text_description",
-            "food_description": food_description,
+            "restaurant_info": {
+                "name": None,
+                "cuisine_style": "Unknown",
+                "confidence": 0.8
+            },
+            "menu_analysis": {
+                "items_found": 1,
+                "extraction_method": "text_input"
+            },
             "wine_recommendations": wine_recommendations,
             "analysis_metadata": {
                 "use_mock": use_mock,
-                "input_method": "text"
+                "input_method": "text",
+                "food_description": food_description
             }
         }
         
