@@ -13,21 +13,28 @@ logger = logging.getLogger(__name__)
 def call_gemini_sync_with_retry(
     prompt: str,
     temperature: float = 0.7,
-    max_retries: int = 5,
-    delay_seconds: float = 2.0
+    max_retries: int = 3,  # Reduced from 5 to 3 for faster failure recovery
+    delay_seconds: float = 1.0,  # Reduced from 2.0s to 1.0s
+    model=None  # Accept pre-configured model for efficiency
 ) -> str:
     """
     Call Gemini synchronously using the GenerativeAI client.
     Temperature: 0 (more factual) - 1.0 (exploratory)
     """
-    _, _, model = setup_gemini_env()
+    if model is None:
+        _, _, model = setup_gemini_env()
     
     for attempt in range(1, max_retries + 1):
         try:
-            response = model.generate_content(
-                prompt,
-                generation_config={"temperature": temperature}
-            )
+            # Configure generation for batch wine recommendation processing
+            config = {"temperature": temperature}
+            
+            # For wine pairing prompts (detected by keywords), use larger token limits
+            if any(keyword in prompt.lower() for keyword in ["wine pairing", "menu items", "food pairing"]):
+                config["max_output_tokens"] = 8192  # Increased for complex menu analysis
+                config["candidate_count"] = 1
+            
+            response = model.generate_content(prompt, generation_config=config)
             return response.text
 
         except Exception as e:
@@ -35,7 +42,7 @@ def call_gemini_sync_with_retry(
                 raise GeminiApiError(f"Gemini API failed after {max_retries} retries: {e}")
 
             wait_time = delay_seconds * attempt     # linear backoff
-            logger.warning(f"Gemini API call failed (attempt {attempt}), retrying in {wait_time}s... Error: {e}")
+            logger.warning(f"Gemini API retry {attempt}/{max_retries} in {wait_time}s")
             time.sleep(wait_time)
 
 def summarize_with_gemini(wine_name: str, content: str, sources: list[str]) -> dict:
@@ -80,6 +87,5 @@ def parse_wine_query_with_gemini(query: str) -> dict:
         }
 
     except Exception as e:
-        error_msg = "Gemeni failed to parse user query"
-        logger.error(f"{error_msg}: {e}")
-        raise GeminiApiError(f"{error_msg}: {e}")
+        logger.error(f"Failed to parse user query: {e}")
+        raise GeminiApiError(f"Failed to parse user query: {e}")

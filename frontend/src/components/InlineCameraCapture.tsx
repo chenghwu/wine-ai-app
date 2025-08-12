@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { Camera, Upload, RotateCcw, X, Check } from 'lucide-react'
+import Image from 'next/image'
 
 interface InlineCameraCaptureProps {
   isVisible: boolean
@@ -39,8 +40,8 @@ export function InlineCameraCapture({ isVisible, onClose, onImageCapture }: Inli
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: facingMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          width: { ideal: 1080 },
+          height: { ideal: 1440 }
         }
       })
       
@@ -101,20 +102,19 @@ export function InlineCameraCapture({ isVisible, onClose, onImageCapture }: Inli
     startCamera()
   }
 
-  const confirmImage = () => {
+  const handleConfirm = () => {
     if (capturedImage) {
       onImageCapture(capturedImage)
-      onClose()
     }
   }
 
   if (!isVisible) return null
 
   return (
-    <div className="w-full mt-3 bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-        <h3 className="text-lg font-semibold text-white">
+      <div className="flex justify-between items-center p-4 bg-zinc-900 flex-shrink-0">
+        <h3 className="text-lg font-medium text-white">
           {capturedImage ? 'Confirm Image' : 'Capture Wine Label'}
         </h3>
         <button
@@ -126,98 +126,100 @@ export function InlineCameraCapture({ isVisible, onClose, onImageCapture }: Inli
       </div>
 
       {/* Camera/Image Area */}
-      <div className="relative bg-black aspect-[4/3] flex items-center justify-center">
-        {capturedImage ? (
-          // Image preview
-          <img
-            src={capturedImage}
-            alt="Captured wine label"
-            className="max-w-full max-h-full object-contain"
-          />
-        ) : cameraError ? (
-          // Error state
-          <div className="text-center text-zinc-400 p-6">
-            <Camera size={48} className="mx-auto mb-4 opacity-50" />
-            <p className="mb-2">{cameraError}</p>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="text-rose-400 hover:text-rose-300 underline"
-            >
-              Choose from gallery instead
-            </button>
-          </div>
-        ) : (
-          // Live camera feed
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-          />
-        )}
+      <div className="relative bg-gradient-to-b from-zinc-900 via-black to-zinc-900 flex-1 flex items-center justify-center">
+        <div className="w-full max-w-sm mx-4 aspect-[3/4] relative bg-black rounded-lg overflow-hidden shadow-2xl">
+          {capturedImage ? (
+            // Image preview
+            <Image
+              src={capturedImage}
+              alt="Captured wine label"
+              fill
+              className="object-contain"
+              unoptimized
+            />
+          ) : cameraError ? (
+            // Error state
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center text-zinc-400 p-6">
+                <Camera size={48} className="mx-auto mb-4 opacity-50" />
+                <p className="mb-2">{cameraError}</p>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-rose-400 hover:text-rose-300 underline"
+                >
+                  Choose from gallery instead
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Live camera feed
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+            />
+          )}
 
-        {/* Hidden canvas for capture */}
-        <canvas ref={canvasRef} className="hidden" />
-        
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileUpload}
-          className="hidden"
-        />
+          {/* Hidden canvas for capture */}
+          <canvas ref={canvasRef} className="hidden" />
+        </div>
       </div>
 
       {/* Controls */}
-      <div className="p-4 bg-zinc-800">
+      <div className="flex justify-center items-center gap-6 p-4 pb-6 bg-zinc-900 flex-shrink-0 safe-area-inset-bottom">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="flex flex-col items-center gap-2 p-3 hover:bg-zinc-800 rounded-lg transition-colors"
+        >
+          <Upload size={24} className="text-zinc-400" />
+          <span className="text-xs text-zinc-400">Gallery</span>
+        </button>
+
         {capturedImage ? (
-          // Confirmation controls
-          <div className="flex items-center justify-center space-x-4">
+          <>
             <button
               onClick={retakePhoto}
-              className="flex items-center space-x-2 px-4 py-2 bg-zinc-600 hover:bg-zinc-700 rounded-lg text-zinc-300 transition-colors"
+              className="flex flex-col items-center gap-2 p-3 hover:bg-zinc-800 rounded-lg transition-colors"
             >
-              <RotateCcw size={16} />
-              <span>Retake</span>
+              <RotateCcw size={24} className="text-zinc-400" />
+              <span className="text-xs text-zinc-400">Retake</span>
             </button>
             <button
-              onClick={confirmImage}
-              className="flex items-center space-x-2 px-6 py-2 bg-rose-800 hover:bg-rose-900 rounded-lg text-white font-semibold transition-colors"
+              onClick={handleConfirm}
+              className="bg-rose-600 hover:bg-rose-700 px-6 py-3 rounded-lg font-medium text-white transition-colors flex items-center gap-2"
             >
-              <Check size={16} />
-              <span>Use this image</span>
+              <Check size={20} />
+              Use This Image
             </button>
-          </div>
+          </>
         ) : (
-          // Camera controls
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center space-x-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-zinc-300 transition-colors"
-            >
-              <Upload size={16} />
-              <span>Gallery</span>
-            </button>
-
+          <>
             <button
               onClick={capturePhoto}
-              disabled={!stream || cameraError !== null}
-              className="w-16 h-16 bg-white hover:bg-gray-100 rounded-full border-4 border-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={!stream}
+              className="w-16 h-16 bg-white rounded-full border-4 border-zinc-300 hover:border-zinc-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             />
-
             <button
               onClick={switchCamera}
-              disabled={!stream || cameraError !== null}
-              className="flex items-center space-x-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-zinc-300 transition-colors disabled:opacity-50"
+              className="flex flex-col items-center gap-2 p-3 hover:bg-zinc-800 rounded-lg transition-colors"
             >
-              <RotateCcw size={16} />
-              <span>Flip</span>
+              <RotateCcw size={24} className="text-zinc-400" />
+              <span className="text-xs text-zinc-400">Flip</span>
             </button>
-          </div>
+          </>
         )}
       </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
     </div>
   )
 }

@@ -16,7 +16,7 @@ from app.utils.url_utils import is_valid_url
 logger = logging.getLogger(__name__)
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-MAX_CONCURRENT_FETCHES = int(os.getenv("MAX_CONCURRENT_FETCHES", 5))
+MAX_CONCURRENT_FETCHES = int(os.getenv("MAX_CONCURRENT_FETCHES", 6))
 MAX_CONTENT_LENGTH = 1024 * 1024  # 1MB
 
 # HTTP client configuration for better performance

@@ -34,11 +34,12 @@ export interface HistoryItem {
 interface SearchHistoryProps {
   history: HistoryItem[]
   onSelectHistory: (item: HistoryItem) => void
-  onClearHistory: () => void
+  onClearHistory: () => Promise<void>
 }
 
 export function SearchHistory({ history, onSelectHistory, onClearHistory }: SearchHistoryProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close dropdown when clicking outside
@@ -73,6 +74,18 @@ export function SearchHistory({ history, onSelectHistory, onClearHistory }: Sear
     setIsOpen(false)
   }
 
+  const handleClearAll = async () => {
+    setIsClearing(true)
+    try {
+      await onClearHistory()
+      setIsOpen(false) // Close dropdown after clearing
+    } catch (error) {
+      console.error('Failed to clear history:', error)
+    } finally {
+      setIsClearing(false)
+    }
+  }
+
   if (history.length === 0) {
     return null
   }
@@ -95,10 +108,11 @@ export function SearchHistory({ history, onSelectHistory, onClearHistory }: Sear
           <div className="p-3 border-b border-zinc-700 flex items-center justify-between">
             <h3 className="text-sm font-medium text-white">Recent Searches</h3>
             <button
-              onClick={onClearHistory}
-              className="text-xs text-zinc-400 hover:text-white"
+              onClick={handleClearAll}
+              disabled={isClearing}
+              className="text-xs text-zinc-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Clear all
+              {isClearing ? 'Clearing...' : 'Clear all'}
             </button>
           </div>
 
